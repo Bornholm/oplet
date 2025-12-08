@@ -1,0 +1,44 @@
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: oplet
+    targets: [linux_amd64]
+    mod_timestamp: "{{ .CommitTimestamp }}"
+    dir: ./cmd/server
+    binary: oplet
+    flags:
+      - -trimpath
+    ldflags:
+      - -w -s -X 'github.com/bornholm/oplet/internal/build.Version={{ .Version }}'
+checksum:
+  name_template: "checksums.txt"
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+
+release:
+  name_template: "v{{ .Version }}"
+
+dockers_v2:
+  - id: oplet
+    sbom: false
+    platforms:
+      - linux/amd64
+    ids:
+      - oplet
+    dockerfile: misc/docker/Dockerfile
+    images:
+      - "ghcr.io/{{ tolower ( .Env.REPO_OWNER ) }}/oplet"
+      - "ghcr.io/{{ tolower ( .Env.REPO_OWNER ) }}/oplet"
+    tags:
+      - "{{ .Version }}"
+      - latest

@@ -1,0 +1,90 @@
+package component
+
+import "github.com/bornholm/oplet/internal/build"
+
+type PageOptions struct {
+	Title         string
+	IncludeFooter bool
+	Head          func() templ.Component
+}
+
+type PageOptionFunc func(opts *PageOptions)
+
+func WithTitle(title string) PageOptionFunc {
+	return func(opts *PageOptions) {
+		opts.Title = title
+	}
+}
+
+func WithHead(fn func() templ.Component) PageOptionFunc {
+	return func(opts *PageOptions) {
+		opts.Head = fn
+	}
+}
+
+func WithFooter(includeFooter bool) PageOptionFunc {
+	return func(opts *PageOptions) {
+		opts.IncludeFooter = includeFooter
+	}
+}
+
+func NewPageOptions(funcs ...PageOptionFunc) *PageOptions {
+	opts := &PageOptions{
+		Title:         "",
+		Head:          nil,
+		IncludeFooter: true,
+	}
+	for _, fn := range funcs {
+		fn(opts)
+	}
+
+	return opts
+}
+
+templ Page(funcs ...PageOptionFunc) {
+	{{ opts := NewPageOptions(funcs...) }}
+	<!DOCTYPE html>
+	<html>
+		<head>
+			<meta charset="utf-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1"/>
+			<title>
+				if ( opts.Title != "") {
+					{ opts.Title } | Oplet
+				} else {
+					Oplet
+				}
+			</title>
+			<link rel="icon" type="image/png" href={ string(BaseURL(ctx, WithPath("/assets/favicon.png"))) }/>
+			<link rel="stylesheet" href={ string(BaseURL(ctx, WithPath("/assets/bulma.min.css"))) }/>
+			<link rel="stylesheet" href={ string(BaseURL(ctx, WithPath("/assets/fontawesome/css/all.min.css"))) }/>
+			<link rel="stylesheet" href={ string(BaseURL(ctx, WithPath("/assets/style.css"))) }/>
+			<script src={ string(BaseURL(ctx, WithPath("/assets/htmx.min.js"))) }></script>
+			if opts.Head != nil {
+				@opts.Head()
+			}
+		</head>
+		<body hx-boost="true" class="is-fullheight">
+			<progress id="global-progress" class="progress is-small is-link htmx-indicator"></progress>
+			<div id="main" class="is-fullheight" hx-indicator="#global-progress">
+				{ children... }
+				if opts.IncludeFooter {
+					<footer class="footer">
+						<div class="content has-text-centered">
+							<p>
+								<b>Oplet</b> (version <a href="https://github.com/bornholm/oplet" target="_blank">{ build.ShortVersion }</a>)
+							</p>
+						</div>
+					</footer>
+				}
+			</div>
+			<script type="text/javascript">
+				htmx.config.responseHandling = [
+					{code:"204", swap: false},   // 204 - No Content by default does nothing, but is not an error
+					{code:"[23]..", swap: true}, // 200 & 300 responses are non-errors and are swapped
+					{code:"[45]..", swap: true, error:true}, // 400 & 500 responses are not swapped and are errors
+				];
+			</script>
+		</body>
+	</html>
+}

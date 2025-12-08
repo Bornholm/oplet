@@ -1,0 +1,231 @@
+package component
+
+import (
+	common "github.com/bornholm/oplet/internal/http/handler/webui/common/component"
+	"github.com/bornholm/oplet/internal/http/handler/webui/common/form"
+	"github.com/bornholm/oplet/internal/store"
+	"github.com/bornholm/oplet/internal/task"
+)
+
+type TaskFormPageVModel struct {
+	Navbar  common.NavbarVModel
+	Task    *store.Task
+	TaskDef *task.Definition
+	Form    *form.Form
+	IsEdit  bool
+}
+
+templ TaskFormPage(vmodel TaskFormPageVModel) {
+	@common.Page(common.WithTitle(getPageTitle(vmodel.IsEdit) + " - Administration - Oplet")) {
+		<div class="container">
+			@common.Navbar(vmodel.Navbar)
+			<section class="section">
+				<div class="columns">
+					<!-- Aside Menu -->
+					<div class="column is-narrow">
+						<aside class="menu">
+							<p class="menu-label">
+								Administration
+							</p>
+							<ul class="menu-list">
+								<li><a href={ common.BaseURL(ctx, common.WithPath("/admin/")) }>Dashboard</a></li>
+								<li><a href={ common.BaseURL(ctx, common.WithPath("/admin/tasks")) } class="is-active">Tasks</a></li>
+							</ul>
+						</aside>
+					</div>
+					<!-- Main Content -->
+					<div class="column">
+						<div class="level">
+							<div class="level-left">
+								<div class="level-item">
+									<h1 class="title">{ getPageTitle(vmodel.IsEdit) }</h1>
+								</div>
+							</div>
+							<div class="level-right">
+								<div class="level-item">
+									<a href={ common.BaseURL(ctx, common.WithPath("/admin/tasks")) } class="button">
+										<span class="icon">
+											<i class="fas fa-arrow-left"></i>
+										</span>
+										<span>Back to the list</span>
+									</a>
+								</div>
+							</div>
+						</div>
+						<div class="columns">
+							<div class="column is-8">
+								if !vmodel.IsEdit {
+									<div class="card">
+										<div class="card-header">
+											<p class="card-header-title">
+												<span class="icon">
+													<i class="fab fa-docker"></i>
+												</span>
+												<span>Task configuration</span>
+											</p>
+										</div>
+										<div class="card-content">
+											@form.FormWrapper(vmodel.Form, common.BaseURL(ctx, common.WithPath("/admin/tasks/new")), "POST") {
+												<div class="field is-grouped mt-5">
+													<div class="control">
+														<button class="button is-primary" type="submit">
+															<span class="icon">
+																<i class="fas fa-save"></i>
+															</span>
+															<span>
+																Add task
+															</span>
+														</button>
+													</div>
+												</div>
+											}
+										</div>
+									</div>
+								}
+								if vmodel.TaskDef != nil {
+									<div class="card">
+										<div class="card-header">
+											<p class="card-header-title">
+												<span class="icon">
+													<i class="fas fa-info-circle"></i>
+												</span>
+												<span>Task informations</span>
+											</p>
+										</div>
+										<div class="card-content">
+											<div class="field">
+												<label class="label">Name</label>
+												<div class="control">
+													<input class="input" type="text" value={ vmodel.TaskDef.Name } readonly/>
+												</div>
+											</div>
+											<div class="field">
+												<label class="label">Author</label>
+												<div class="control">
+													<input class="input" type="text" value={ vmodel.TaskDef.Author } readonly/>
+												</div>
+											</div>
+											if vmodel.IsEdit {
+												<div class="field">
+													<label class="label">Image Ref.</label>
+													<div class="control">
+														<input class="input" type="text" value={ vmodel.Task.ImageRef } readonly/>
+													</div>
+												</div>
+											}
+											<div class="field">
+												<label class="label">Description</label>
+												<div class="control">
+													<textarea class="textarea" readonly rows="4">{ vmodel.TaskDef.Description }</textarea>
+												</div>
+											</div>
+										</div>
+									</div>
+								}
+								if vmodel.IsEdit {
+									<div class="card mt-5">
+										<div class="card-header">
+											<p class="card-header-title">
+												<span class="icon">
+													<i class="fas fa-cogs"></i>
+												</span>
+												<span>Configuration</span>
+											</p>
+										</div>
+										<div class="card-content">
+											<p class="help mb-4">
+												Theses parameters will be injected into each instance of the task.
+											</p>
+											@form.FormWrapper(vmodel.Form, common.BaseURL(ctx, common.WithPathf("/admin/tasks/%d/edit", vmodel.Task.ID)), "POST") {
+												<div class="field is-grouped mt-5">
+													<div class="control">
+														<button class="button is-primary" type="submit">
+															<span class="icon">
+																<i class="fas fa-save"></i>
+															</span>
+															<span>
+																Update
+															</span>
+														</button>
+													</div>
+												</div>
+											}
+										</div>
+									</div>
+								}
+							</div>
+							<div class="column is-4">
+								if vmodel.TaskDef != nil {
+									if len(vmodel.TaskDef.Inputs) > 0 {
+										<div class="card">
+											<div class="card-header">
+												<p class="card-header-title">
+													<span class="icon">
+														<i class="fas fa-list"></i>
+													</span>
+													<span>Inputs</span>
+												</p>
+											</div>
+											<div class="card-content">
+												<div class="content">
+													for _, input := range vmodel.TaskDef.Inputs {
+														<div class="mb-3">
+															<p class="has-text-weight-semibold">{ input.Name }</p>
+															<p class="is-size-7">{ input.Description }</p>
+															<div class="field is-grouped is-grouped-multiline">
+																<div class="control">
+																	<div class="tags has-addons">
+																		<span class="tag is-dark">Input</span>
+																		<span class="tag is-info">{ string(input.Type) }</span>
+																	</div>
+																</div>
+																if input.Required {
+																	<div class="control">
+																		<div class="tags has-addons">
+																			<span class="tag is-dark">Required</span>
+																			<span class="tag is-warning">yes</span>
+																		</div>
+																	</div>
+																}
+															</div>
+														</div>
+													}
+												</div>
+											</div>
+										</div>
+									}
+								} else if !vmodel.IsEdit {
+									<div class="card">
+										<div class="card-header">
+											<p class="card-header-title">
+												<span class="icon">
+													<i class="fas fa-info"></i>
+												</span>
+												<span>Instructions</span>
+											</p>
+										</div>
+										<div class="card-content">
+											<div class="content">
+												<p>Enter a valid Docker image reference to automatically retrieve task information.</p>
+												<p class="is-size-7 has-text-grey">
+													Example: <code>registry.example.com/my-task:latest</code>
+												</p>
+											</div>
+										</div>
+									</div>
+								}
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
+		</div>
+	}
+}
+
+func getPageTitle(isEdit bool) string {
+	if isEdit {
+		return "Task configuration"
+	}
+	return "Add task"
+}

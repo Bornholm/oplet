@@ -1,0 +1,82 @@
+package component
+
+import (
+	common "github.com/bornholm/oplet/internal/http/handler/webui/common/component"
+	"github.com/bornholm/oplet/internal/http/handler/webui/common/form"
+	"github.com/bornholm/oplet/internal/task"
+)
+
+type NewTaskPageVModel struct {
+	Navbar common.NavbarVModel
+	TaskID uint
+	Task   *task.Definition
+	Form   *form.Form
+}
+
+templ NewTaskPage(vmodel NewTaskPageVModel) {
+	@common.Page(common.WithTitle(vmodel.Task.Name + " | New Task")) {
+		<div class="container">
+			@common.Navbar(vmodel.Navbar)
+			<section class="section">
+				if vmodel.Task != nil {
+					<div class="columns">
+						<div class="column is-8 is-offset-2">
+							<div class="card">
+								<div class="card-header">
+									<p class="card-header-title">
+										<span class="icon">
+											<i class="fas fa-cube"></i>
+										</span>
+										{ vmodel.Task.Name }
+									</p>
+								</div>
+								<div class="card-content">
+									if vmodel.Task.Description != "" {
+										<div class="content">
+											<p>{ vmodel.Task.Description }</p>
+										</div>
+									}
+									if vmodel.Form != nil {
+										@form.FormWrapper(vmodel.Form, common.BaseURL(ctx, common.WithPathf("/tasks/%d/new", vmodel.TaskID)), "POST") {
+											<div class="field is-grouped">
+												<div class="control">
+													<button class="button is-primary" type="submit">
+														<span class="icon">
+															<i class="fas fa-play"></i>
+														</span>
+														<span>Execute</span>
+													</button>
+												</div>
+												<div class="control">
+													<a class="button is-light" href={ common.BaseURL(ctx, common.WithPath("/tasks")) }>Cancel</a>
+												</div>
+											</div>
+										}
+									} else {
+										<div class="notification">
+											<p>This task has no configurable inputs.</p>
+											<div class="field">
+												<div class="control">
+													<a class="button is-primary" hx-method="post" href={ common.BaseURL(ctx, common.WithPathf("/tasks/%d/execute", vmodel.TaskID)) }>
+														<span class="icon">
+															<i class="fas fa-play"></i>
+														</span>
+														<span>Execute</span>
+													</a>
+												</div>
+											</div>
+										</div>
+									}
+								</div>
+							</div>
+						</div>
+					</div>
+				} else {
+					<div class="notification is-danger">
+						<p>Task not found.</p>
+					</div>
+				}
+			</section>
+		</div>
+	}
+}

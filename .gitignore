@@ -1,0 +1,6 @@
+/tools
+/bin
+/.env
+*.sqlite*
+/data
+/dist

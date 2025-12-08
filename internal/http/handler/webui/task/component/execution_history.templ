@@ -1,0 +1,561 @@
+package component
+
+import (
+	"context"
+	"fmt"
+	common "github.com/bornholm/oplet/internal/http/handler/webui/common/component"
+	"github.com/bornholm/oplet/internal/store"
+	"github.com/bornholm/oplet/internal/store/repository/execution"
+	"time"
+)
+
+type TaskExecutionHistoryPageVModel struct {
+	Navbar     common.NavbarVModel
+	Task       *store.Task
+	Executions []*store.TaskExecution
+	Stats      *execution.ExecutionStats
+	Filters    execution.ExecutionFilters
+	Pagination PaginationInfo
+}
+
+type PaginationInfo struct {
+	CurrentPage int
+	TotalPages  int
+	HasNext     bool
+	HasPrev     bool
+	Limit       int
+}
+
+type GlobalExecutionHistoryPageVModel struct {
+	Navbar     common.NavbarVModel
+	Executions []*ExecutionWithTask
+	Filters    execution.ExecutionFilters
+	Pagination PaginationInfo
+}
+
+type ExecutionWithTask struct {
+	Execution *store.TaskExecution
+	Task      *store.Task
+}
+
+templ TaskExecutionHistoryPage(vmodel TaskExecutionHistoryPageVModel) {
+	@common.Page(common.WithTitle(vmodel.Task.Name + " | Execution History")) {
+		<div class="container">
+			@common.Navbar(vmodel.Navbar)
+			<section class="section">
+				@TaskHistoryBreadcrumb(vmodel.Task)
+				@TaskExecutionHistoryHeader(vmodel.Task)
+				@TaskExecutionHistoryFilters(vmodel.Filters, vmodel.Task.ID)
+				@ExecutionHistoryTable(vmodel.Executions, vmodel.Task.ID, vmodel.Stats)
+				@ExecutionHistoryPagination(vmodel.Pagination, vmodel.Task.ID)
+			</section>
+		</div>
+	}
+}
+
+templ TaskHistoryBreadcrumb(task *store.Task) {
+	@common.Breadcrumb(common.BreadcrumbVModel{
+		Items: []common.BreadcrumbItem{
+			{Label: "Tasks", URL: "/tasks", Icon: "fa-tasks"},
+			{Label: task.Name, URL: fmt.Sprintf("/tasks/%d/new", task.ID), Icon: "fa-cube"},
+			{Label: "Execution History", URL: "", Icon: "fa-history"},
+		},
+	})
+}
+
+templ TaskExecutionHistoryHeader(task *store.Task) {
+	<div class="level">
+		<div class="level-left">
+			<div class="level-item">
+				<div>
+					<p class="title is-4">
+						<span class="icon">
+							<i class="fas fa-history"></i>
+						</span>
+						{ task.Name } - Execution History
+					</p>
+				</div>
+			</div>
+		</div>
+		<div class="level-right">
+			<div class="level-item">
+				<a href={ common.BaseURL(ctx, common.WithPathf("/tasks/%d/new", task.ID)) } class="button is-primary is-medium">
+					<span class="icon">
+						<i class="fas fa-play"></i>
+					</span>
+					<span>Execute</span>
+				</a>
+			</div>
+		</div>
+	</div>
+}
+
+templ ExecutionStatsCards(stats *execution.ExecutionStats) {
+	<div class="field is-grouped">
+		<div class="control">
+			<div class="tags has-addons">
+				<span class="tag">Total</span>
+				<span class="tag is-info">{ fmt.Sprintf("%d", stats.TotalExecutions) }</span>
+			</div>
+		</div>
+		<div class="control">
+			<div class="tags has-addons">
+				<span class="tag">Success</span>
+				<span class="tag is-success">{ fmt.Sprintf("%d", stats.SuccessfulRuns) }</span>
+			</div>
+		</div>
+		<div class="control">
+			<div class="tags has-addons">
+				<span class="tag">Failed</span>
+				<span class="tag is-danger">{ fmt.Sprintf("%d", stats.FailedRuns) }</span>
+			</div>
+		</div>
+		if stats.AverageRunTime > 0 {
+			<div class="control">
+				<div class="tags has-addons">
+					<span class="tag">Avg Time</span>
+					<span class="tag">{ stats.AverageRunTime.Round(time.Second).String() }</span>
+				</div>
+			</div>
+		}
+	</div>
+}
+
+templ ExecutionHistoryTable(executions []*store.TaskExecution, taskID uint, stats *execution.ExecutionStats) {
+	<div class="card">
+		<div class="card-content">
+			if len(executions) == 0 {
+				<div class="notification">
+					<p>No executions found for this task.</p>
+				</div>
+			} else {
+				<div class="table-container">
+					<table class="table is-fullwidth is-hoverable">
+						<thead>
+							<tr>
+								<th>ID</th>
+								<th>Status</th>
+								<th>Started</th>
+								<th>Duration</th>
+								<th>Actions</th>
+							</tr>
+						</thead>
+						<tbody>
+							for _, execution := range executions {
+								@ExecutionHistoryRow(*execution)
+							}
+						</tbody>
+					</table>
+				</div>
+				<div class="is-clearfix">
+					<div class="is-pulled-right">
+						@ExecutionStatsCards(stats)
+					</div>
+				</div>
+			}
+		</div>
+	</div>
+}
+
+templ ExecutionHistoryRow(execution store.TaskExecution) {
+	<tr>
+		<td>
+			<strong>#{ fmt.Sprintf("%d", execution.ID) }</strong>
+		</td>
+		<td>
+			@StatusBadge(execution.Status)
+		</td>
+		<td>
+			if execution.StartedAt != nil {
+				<span title={ execution.StartedAt.Format("January 2, 2006 15:04:05") }>
+					{ formatRelativeTime(*execution.StartedAt) }
+				</span>
+			} else {
+				<span class="has-text-grey">Not started</span>
+			}
+		</td>
+		<td>
+			if execution.StartedAt != nil && execution.FinishedAt != nil {
+				{ execution.FinishedAt.Sub(*execution.StartedAt).Round(time.Second).String() }
+			} else if execution.StartedAt != nil {
+				<span class="tag is-warning is-light">Running</span>
+			} else {
+				<span class="has-text-grey">-</span>
+			}
+		</td>
+		<td>
+			<div class="field is-grouped">
+				<div class="control">
+					<a
+						href={ common.BaseURL(ctx, common.WithPathf("/tasks/%d/executions/%d", execution.TaskID, execution.ID)) }
+						class="button is-small is-info"
+					>
+						<span class="icon">
+							<i class="fas fa-eye"></i>
+						</span>
+						<span>View</span>
+					</a>
+				</div>
+			</div>
+		</td>
+	</tr>
+}
+
+templ GlobalExecutionHistoryPage(vmodel GlobalExecutionHistoryPageVModel) {
+	@common.Page(common.WithTitle("All Executions")) {
+		<div class="container">
+			@common.Navbar(vmodel.Navbar)
+			<section class="section">
+				<div class="level">
+					<div class="level-left">
+						<div class="level-item">
+							<p class="title is-4">
+								<span class="icon">
+									<i class="fas fa-cubes"></i>
+								</span>
+								All Executions
+							</p>
+						</div>
+					</div>
+				</div>
+				@GlobalExecutionFilters(vmodel.Filters)
+				@GlobalExecutionTable(vmodel.Executions)
+				@ExecutionHistoryPagination(vmodel.Pagination, 0)
+			</section>
+		</div>
+	}
+}
+
+templ TaskExecutionHistoryFilters(filters execution.ExecutionFilters, taskID uint) {
+	<div class="card mb-5">
+		<div class="card-header">
+			<p class="card-header-title">
+				<span class="icon">
+					<i class="fas fa-filter"></i>
+				</span>
+				Filters
+			</p>
+		</div>
+		<div class="card-content">
+			<form method="GET" class="field is-grouped is-grouped-multiline">
+				<div class="control">
+					<div class="field">
+						<label class="label">Status</label>
+						<div class="select">
+							<select name="status">
+								<option value="">All Statuses</option>
+								<option value="succeeded" selected?={ filters.Status == "succeeded" }>Succeeded</option>
+								<option value="failed" selected?={ filters.Status == "failed" }>Failed</option>
+								<option value="running" selected?={ filters.Status == "running" }>Running</option>
+								<option value="pending" selected?={ filters.Status == "pending" }>Pending</option>
+							</select>
+						</div>
+					</div>
+				</div>
+				<div class="control">
+					<div class="field">
+						<label class="label">Date From</label>
+						<input class="input" type="date" name="date_from" value={ filters.DateFrom }/>
+					</div>
+				</div>
+				<div class="control">
+					<div class="field">
+						<label class="label">Date To</label>
+						<input class="input" type="date" name="date_to" value={ filters.DateTo }/>
+					</div>
+				</div>
+				<div class="control">
+					<div class="field">
+						<label class="label">&nbsp;</label>
+						<button class="button is-primary" type="submit">
+							<span class="icon">
+								<i class="fas fa-search"></i>
+							</span>
+							<span>Filter</span>
+						</button>
+					</div>
+				</div>
+				<div class="control">
+					<div class="field">
+						<label class="label">&nbsp;</label>
+						<a href={ common.BaseURL(ctx, common.WithPathf("/tasks/%d/executions", taskID)) } class="button is-light">
+							<span class="icon">
+								<i class="fas fa-times"></i>
+							</span>
+							<span>Clear</span>
+						</a>
+					</div>
+				</div>
+			</form>
+		</div>
+	</div>
+}
+
+templ ExecutionHistoryFilters() {
+	<div class="card mb-5">
+		<div class="card-header">
+			<p class="card-header-title">
+				<span class="icon">
+					<i class="fas fa-filter"></i>
+				</span>
+				Filters
+			</p>
+		</div>
+		<div class="card-content">
+			<form method="GET" class="field is-grouped is-grouped-multiline">
+				<div class="control">
+					<div class="field">
+						<label class="label">Status</label>
+						<div class="select">
+							<select name="status">
+								<option value="">All Statuses</option>
+								<option value="succeeded">Succeeded</option>
+								<option value="failed">Failed</option>
+								<option value="running">Running</option>
+								<option value="pending">Pending</option>
+							</select>
+						</div>
+					</div>
+				</div>
+				<div class="control">
+					<div class="field">
+						<label class="label">Date From</label>
+						<input class="input" type="date" name="date_from"/>
+					</div>
+				</div>
+				<div class="control">
+					<div class="field">
+						<label class="label">Date To</label>
+						<input class="input" type="date" name="date_to"/>
+					</div>
+				</div>
+				<div class="control">
+					<div class="field">
+						<label class="label">&nbsp;</label>
+						<button class="button is-primary" type="submit">
+							<span class="icon">
+								<i class="fas fa-search"></i>
+							</span>
+							<span>Filter</span>
+						</button>
+					</div>
+				</div>
+				<div class="control">
+					<div class="field">
+						<label class="label">&nbsp;</label>
+						<a href="?" class="button is-light">
+							<span class="icon">
+								<i class="fas fa-times"></i>
+							</span>
+							<span>Clear</span>
+						</a>
+					</div>
+				</div>
+			</form>
+		</div>
+	</div>
+}
+
+templ GlobalExecutionFilters(filters execution.ExecutionFilters) {
+	<div class="card mb-5">
+		<div class="card-header">
+			<p class="card-header-title">
+				<span class="icon">
+					<i class="fas fa-filter"></i>
+				</span>
+				Filters
+			</p>
+		</div>
+		<div class="card-content">
+			<form method="GET" class="field is-grouped is-grouped-multiline">
+				<div class="control">
+					<div class="field">
+						<label class="label">Status</label>
+						<div class="select">
+							<select name="status">
+								<option value="">All Statuses</option>
+								<option value="succeeded" selected?={ filters.Status == "succeeded" }>Succeeded</option>
+								<option value="failed" selected?={ filters.Status == "failed" }>Failed</option>
+								<option value="running" selected?={ filters.Status == "running" }>Running</option>
+								<option value="pending" selected?={ filters.Status == "pending" }>Pending</option>
+							</select>
+						</div>
+					</div>
+				</div>
+				<div class="control">
+					<div class="field">
+						<label class="label">Date From</label>
+						<input class="input" type="date" name="date_from" value={ filters.DateFrom }/>
+					</div>
+				</div>
+				<div class="control">
+					<div class="field">
+						<label class="label">Date To</label>
+						<input class="input" type="date" name="date_to" value={ filters.DateTo }/>
+					</div>
+				</div>
+				<div class="control">
+					<div class="field">
+						<label class="label">&nbsp;</label>
+						<button class="button is-primary" type="submit">
+							<span class="icon">
+								<i class="fas fa-search"></i>
+							</span>
+							<span>Filter</span>
+						</button>
+					</div>
+				</div>
+				<div class="control">
+					<div class="field">
+						<label class="label">&nbsp;</label>
+						<a href="?" class="button is-light">
+							<span class="icon">
+								<i class="fas fa-times"></i>
+							</span>
+							<span>Clear</span>
+						</a>
+					</div>
+				</div>
+			</form>
+		</div>
+	</div>
+}
+
+templ GlobalExecutionTable(executions []*ExecutionWithTask) {
+	<div class="card">
+		<div class="card-content">
+			if len(executions) == 0 {
+				<div class="notification">
+					<p>No executions found.</p>
+				</div>
+			} else {
+				<div class="table-container">
+					<table class="table is-fullwidth is-hoverable">
+						<thead>
+							<tr>
+								<th>ID</th>
+								<th>Task</th>
+								<th>Status</th>
+								<th>Started</th>
+								<th>Duration</th>
+								<th>User</th>
+								<th>Actions</th>
+							</tr>
+						</thead>
+						<tbody>
+							for _, execWithTask := range executions {
+								@GlobalExecutionRow(*execWithTask)
+							}
+						</tbody>
+					</table>
+				</div>
+			}
+		</div>
+	</div>
+}
+
+templ GlobalExecutionRow(execWithTask ExecutionWithTask) {
+	<tr>
+		<td>
+			<strong>#{ fmt.Sprintf("%d", execWithTask.Execution.ID) }</strong>
+		</td>
+		<td>
+			<a href={ common.BaseURL(ctx, common.WithPathf("/tasks/%d/executions", execWithTask.Task.ID)) }>
+				{ execWithTask.Task.Name }
+			</a>
+		</td>
+		<td>
+			@StatusBadge(execWithTask.Execution.Status)
+		</td>
+		<td>
+			if execWithTask.Execution.StartedAt != nil {
+				<span title={ execWithTask.Execution.StartedAt.Format("January 2, 2006 15:04:05") }>
+					{ formatRelativeTime(*execWithTask.Execution.StartedAt) }
+				</span>
+			} else {
+				<span class="has-text-grey">Not started</span>
+			}
+		</td>
+		<td>
+			if execWithTask.Execution.StartedAt != nil && execWithTask.Execution.FinishedAt != nil {
+				{ execWithTask.Execution.FinishedAt.Sub(*execWithTask.Execution.StartedAt).Round(time.Second).String() }
+			} else if execWithTask.Execution.StartedAt != nil {
+				<span class="tag is-warning is-light">Running</span>
+			} else {
+				<span class="has-text-grey">-</span>
+			}
+		</td>
+		<td>
+			if execWithTask.Execution.User != nil {
+				{ execWithTask.Execution.User.DisplayName }
+			} else {
+				<span class="has-text-grey">Unknown</span>
+			}
+		</td>
+		<td>
+			<div class="field is-grouped">
+				<div class="control">
+					<a
+						href={ common.BaseURL(ctx, common.WithPathf("/tasks/%d/executions/%d", execWithTask.Task.ID, execWithTask.Execution.ID)) }
+						class="button is-small is-info"
+					>
+						<span class="icon">
+							<i class="fas fa-eye"></i>
+						</span>
+						<span>View</span>
+					</a>
+				</div>
+			</div>
+		</td>
+	</tr>
+}
+
+templ ExecutionHistoryPagination(pagination PaginationInfo, taskID uint) {
+	if pagination.TotalPages > 1 {
+		<nav class="pagination is-centered mt-5" role="navigation">
+			if pagination.HasPrev {
+				<a href={ buildPaginationURL(ctx, taskID, pagination.CurrentPage-1) } class="pagination-previous">Previous</a>
+			} else {
+				<span class="pagination-previous" disabled>Previous</span>
+			}
+			if pagination.HasNext {
+				<a href={ buildPaginationURL(ctx, taskID, pagination.CurrentPage+1) } class="pagination-next">Next</a>
+			} else {
+				<span class="pagination-next" disabled>Next</span>
+			}
+			<ul class="pagination-list">
+				for i := 1; i <= pagination.TotalPages; i++ {
+					if i == pagination.CurrentPage {
+						<li><span class="pagination-link is-current">{ fmt.Sprintf("%d", i) }</span></li>
+					} else {
+						<li><a href={ buildPaginationURL(ctx, taskID, i) } class="pagination-link">{ fmt.Sprintf("%d", i) }</a></li>
+					}
+				}
+			</ul>
+		</nav>
+	}
+}
+
+// Helper functions
+
+func buildPaginationURL(ctx context.Context, taskID uint, page int) templ.SafeURL {
+	if taskID > 0 {
+		return common.BaseURL(ctx, common.WithPathf("/tasks/%d/executions?page=%d", taskID, page))
+	}
+	return common.BaseURL(ctx, common.WithPathf("/tasks/executions?page=%d", page))
+}
+
+func formatRelativeTime(t time.Time) string {
+	now := time.Now()
+	diff := now.Sub(t)
+
+	if diff < time.Minute {
+		return "Just now"
+	} else if diff < time.Hour {
+		return fmt.Sprintf("%d minutes ago", int(diff.Minutes()))
+	} else if diff < 24*time.Hour {
+		return fmt.Sprintf("%d hours ago", int(diff.Hours()))
+	} else {
+		return t.Format("Jan 2, 15:04")
+	}
+}
