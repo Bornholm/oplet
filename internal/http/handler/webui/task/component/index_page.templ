@@ -1,0 +1,124 @@
+package component
+
+import (
+	"fmt"
+	common "github.com/bornholm/oplet/internal/http/handler/webui/common/component"
+	"github.com/bornholm/oplet/internal/store"
+)
+
+type IndexPageVModel struct {
+	Navbar      common.NavbarVModel
+	SearchQuery string
+	Tasks       []*store.Task
+}
+
+templ IndexPage(vmodel IndexPageVModel) {
+	@common.Page(common.WithTitle("Tasks")) {
+		<div class="container">
+			@common.Navbar(vmodel.Navbar)
+			<section class="section">
+				<!-- Search Form -->
+				<form id="search-form" method="GET" action={ common.BaseURL(ctx, common.WithPath("/")) }>
+					<div class="field has-addons">
+						<div class="control is-expanded">
+							<input
+								class="input is-medium"
+								type="text"
+								name="q"
+								placeholder="Search tasks by name, author, description, or image reference..."
+								value={ vmodel.SearchQuery }
+							/>
+						</div>
+						<div class="control">
+							<button class="button is-medium" type="submit">
+								<span class="icon">
+									<i class="fas fa-search"></i>
+								</span>
+								<span>Search</span>
+							</button>
+						</div>
+					</div>
+				</form>
+				<!-- Tasks Grid -->
+				<div class="columns is-multiline mt-5">
+					if len(vmodel.Tasks) == 0 {
+						<div class="column is-full">
+							<div class="notification is-info">
+								if vmodel.SearchQuery != "" {
+									No tasks found matching your search criteria.
+								} else {
+									No tasks available.
+								}
+							</div>
+						</div>
+					} else {
+						for _, task := range vmodel.Tasks {
+							<div class="column is-one-third">
+								@TaskCard(*task)
+							</div>
+						}
+					}
+				</div>
+			</section>
+		</div>
+	}
+}
+
+templ TaskCard(task store.Task) {
+	<div class="card">
+		<div class="card-content">
+			<div class="media">
+				<div class="media-left">
+					<figure class="image is-48x48">
+						<span class="icon is-large has-text-info">
+							<i class="fas fa-cube fa-2x"></i>
+						</span>
+					</figure>
+				</div>
+				<div class="media-content">
+					<p class="title is-5">{ task.Name }</p>
+					<p class="subtitle is-6 has-text-grey">by { task.Author }</p>
+				</div>
+			</div>
+			<div class="content">
+				@common.Markdown(task.Description)
+				<div class="tags">
+					<span class="tag is-small">
+						<span class="icon">
+							<i class="fab fa-docker"></i>
+						</span>
+						<span>{ task.ImageRef }</span>
+					</span>
+					if len(task.Executions) > 0 {
+						<span class="tag is-small is-info">
+							<span class="icon">
+								<i class="fas fa-history"></i>
+							</span>
+							<span>{ fmt.Sprintf("%d executions", len(task.Executions)) }</span>
+						</span>
+					}
+				</div>
+			</div>
+		</div>
+		<footer class="card-footer">
+			<a
+				href={ common.BaseURL(ctx, common.WithPathf("/tasks/%d/new", task.ID)) }
+				class="card-footer-item has-text-primary"
+			>
+				<span class="icon">
+					<i class="fas fa-play"></i>
+				</span>
+				<span>Execute</span>
+			</a>
+			<a
+				href={ common.BaseURL(ctx, common.WithPathf("/tasks/%d/executions", task.ID)) }
+				class="card-footer-item has-text-info"
+			>
+				<span class="icon">
+					<i class="fas fa-history"></i>
+				</span>
+				<span>History</span>
+			</a>
+		</footer>
+	</div>
+}

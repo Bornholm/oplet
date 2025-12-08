@@ -1,0 +1,70 @@
+package component
+
+import common "github.com/bornholm/oplet/internal/http/handler/webui/common/component"
+
+type IndexPageVModel struct {
+	Navbar common.NavbarVModel
+}
+
+templ IndexPage(vmodel IndexPageVModel) {
+	@common.Page(common.WithTitle("Administration - Oplet")) {
+		<div class="container">
+			@common.Navbar(vmodel.Navbar)
+			<section class="section">
+				<div class="columns">
+					<!-- Aside Menu -->
+					<div class="column is-narrow">
+						<aside class="menu">
+							<p class="menu-label">
+								Administration
+							</p>
+							<ul class="menu-list">
+								<li><a href={ common.BaseURL(ctx, common.WithPath("/admin/")) } class="is-active">Tableau de bord</a></li>
+								<li><a href={ common.BaseURL(ctx, common.WithPath("/admin/users")) }>Utilisateurs</a></li>
+								<li><a href={ common.BaseURL(ctx, common.WithPath("/admin/tasks")) }>Tâches</a></li>
+								<li><a href={ common.BaseURL(ctx, common.WithPath("/admin/system")) }>Système</a></li>
+							</ul>
+							<p class="menu-label">
+								Configuration
+							</p>
+							<ul class="menu-list">
+								<li><a href={ common.BaseURL(ctx, common.WithPath("/admin/settings")) }>Paramètres</a></li>
+								<li><a href={ common.BaseURL(ctx, common.WithPath("/admin/logs")) }>Journaux</a></li>
+							</ul>
+						</aside>
+					</div>
+					<!-- Main Content -->
+					<div class="column">
+						<section class="section">
+							<div class="content">
+								<h1 class="title">Tableau de bord administrateur</h1>
+								<p class="subtitle">Bienvenue dans l'interface d'administration d'Oplet</p>
+								<div class="columns">
+									<div class="column">
+										<div class="box">
+											<h2 class="title is-4">Statistiques</h2>
+											<p>Informations système et statistiques d'utilisation seront affichées ici.</p>
+										</div>
+									</div>
+									<div class="column">
+										<div class="box">
+											<h2 class="title is-4">Actions rapides</h2>
+											<div class="buttons">
+												<a class="button is-primary" href={ common.BaseURL(ctx, common.WithPath("/admin/users")) }>Gérer les utilisateurs</a>
+												<a class="button is-info" href={ common.BaseURL(ctx, common.WithPath("/admin/tasks")) }>Voir les tâches</a>
+											</div>
+										</div>
+									</div>
+								</div>
+								<div class="box">
+									<h2 class="title is-4">État du système</h2>
+									<p>Informations sur l'état du système et les services seront affichées ici.</p>
+								</div>
+							</div>
+						</section>
+					</div>
+				</div>
+			</section>
+		</div>
+	}
+}

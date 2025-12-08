@@ -1,0 +1,93 @@
+package component
+
+import "time"
+
+type ErrorDisplayVModel struct {
+	ExecutionID uint
+	ErrorType   string
+	Message     string
+	Details     string
+	Timestamp   time.Time
+	Recoverable bool
+	Actions     []ErrorAction
+}
+
+type ErrorAction struct {
+	Label string
+	URL   string
+	Icon  string
+	Style string
+}
+
+templ ErrorDisplay(vmodel ErrorDisplayVModel) {
+	<div class="notification is-danger">
+		<div class="level">
+			<div class="level-left">
+				<div class="level-item">
+					<span class="icon is-large has-text-danger">
+						<i class="fas fa-exclamation-triangle fa-2x"></i>
+					</span>
+				</div>
+				<div class="level-item">
+					<div>
+						<p class="title is-5">Execution Failed</p>
+						<p class="subtitle is-6">{ vmodel.Message }</p>
+						if vmodel.Details != "" {
+							<details class="mt-2">
+								<summary class="has-text-weight-semibold">Technical Details</summary>
+								<pre class="mt-2 p-2 has-background-light">{ vmodel.Details }</pre>
+							</details>
+						}
+					</div>
+				</div>
+			</div>
+			<div class="level-right">
+				<div class="level-item">
+					<div class="field is-grouped">
+						for _, action := range vmodel.Actions {
+							<div class="control">
+								<a href={ templ.SafeURL(action.URL) } class="button is-{ action.Style }">
+									<span class="icon">
+										<i class="fas fa-{ action.Icon }"></i>
+									</span>
+									<span>{ action.Label }</span>
+								</a>
+							</div>
+						}
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+templ ConnectionStatus(isConnected bool, lastUpdate time.Time) {
+	<div class="connection-status level is-mobile">
+		<div class="level-left">
+			<div class="level-item">
+				<span class="icon has-text-{ if isConnected }success{ else }danger{ end }">
+					<i class="fas fa-{ if isConnected }wifi{ else }wifi-slash{ end }"></i>
+				</span>
+				<span class="is-size-7">
+					if isConnected {
+						Connected • Last update { formatRelativeTime(lastUpdate) }
+					} else {
+						Connection lost • Retrying...
+					}
+				</span>
+			</div>
+		</div>
+		<div class="level-right">
+			<div class="level-item">
+				if !isConnected {
+					<button class="button is-small is-light" onclick="location.reload()">
+						<span class="icon">
+							<i class="fas fa-redo"></i>
+						</span>
+						<span>Retry</span>
+					</button>
+				}
+			</div>
+		</div>
+	</div>
+}

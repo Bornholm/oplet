@@ -1,0 +1,349 @@
+package component
+
+import (
+	"fmt"
+	common "github.com/bornholm/oplet/internal/http/handler/webui/common/component"
+	"github.com/bornholm/oplet/internal/store"
+	"strings"
+	"time"
+)
+
+type ExecutionPageVModel struct {
+	Navbar      common.NavbarVModel
+	Task        *store.Task
+	Execution   *store.TaskExecution
+	Logs        []*store.TaskExecutionLog
+	OutputFiles []*store.TaskExecutionFile
+	IsRunning   bool
+}
+
+templ ExecutionPage(vmodel ExecutionPageVModel) {
+	@common.Page(common.WithTitle(vmodel.Task.Name + " | Execution Progress")) {
+		<div class="container">
+			@common.Navbar(vmodel.Navbar)
+			<section class="section">
+				@ExecutionBreadcrumb(vmodel.Task, vmodel.Execution)
+				@ExecutionHeader(vmodel.Task, vmodel.Execution)
+				<div class="columns">
+					<div class="column is-8">
+						@LogViewer(vmodel.Task.ID, vmodel.Execution.ID, vmodel.Logs, vmodel.IsRunning)
+					</div>
+					<div class="column is-4">
+						@ExecutionSidebar(vmodel.Execution, vmodel.OutputFiles)
+					</div>
+				</div>
+			</section>
+		</div>
+	}
+}
+
+templ ExecutionBreadcrumb(task *store.Task, execution *store.TaskExecution) {
+	@common.Breadcrumb(common.BreadcrumbVModel{
+		Items: []common.BreadcrumbItem{
+			{Label: "Tasks", URL: "/tasks", Icon: "fa-tasks"},
+			{Label: task.Name, URL: fmt.Sprintf("/tasks/%d/executions", task.ID), Icon: "fa-cube"},
+			{Label: fmt.Sprintf("Execution #%d", execution.ID), URL: "", Icon: "fa-play"},
+		},
+	})
+}
+
+templ ExecutionHeader(task *store.Task, execution *store.TaskExecution) {
+	<div class="level">
+		<div class="level-left">
+			<div class="level-item">
+				<div>
+					<p class="title is-4">
+						<span class="icon">
+							<i class="fas fa-cube"></i>
+						</span>
+						{ task.Name }
+					</p>
+					<p class="subtitle is-6">
+						Execution #{ fmt.Sprintf("%d", execution.ID) } • 
+						Started { execution.CreatedAt.Format("Jan 2, 2006 15:04") }
+					</p>
+				</div>
+			</div>
+		</div>
+		<div class="level-right">
+			<div class="level-item">
+				@StatusBadge(execution.Status)
+			</div>
+		</div>
+	</div>
+}
+
+templ LogViewer(taskID uint, executionID uint, logs []*store.TaskExecutionLog, isRunning bool) {
+	<div class="card">
+		<div class="card-header">
+			<p class="card-header-title">
+				<span class="icon">
+					<i class="fas fa-terminal"></i>
+				</span>
+				Logs
+				if isRunning {
+					<span class="tag is-success is-light ml-2">
+						<span class="icon">
+							<i class="fas fa-circle fa-pulse"></i>
+						</span>
+						<span>Live</span>
+					</span>
+				}
+			</p>
+		</div>
+		<div class="card-content px-5" style="overflow-x:auto">
+			<table
+				class="is-fullwidth is-static"
+				if isRunning {
+					hx-get={ common.BaseURL(ctx, common.WithPathf("/tasks/%d/executions/%d/logs", taskID, executionID)) }
+					hx-trigger="every 2s"
+					hx-swap="innerHTML"
+					hx-indicator="#log-loading"
+				}
+			>
+				@LogEntries(logs)
+			</table>
+			<div id="log-loading" class="htmx-indicator">
+				<div class="has-text-centered p-3">
+					<span class="icon">
+						<i class="fas fa-spinner fa-spin"></i>
+					</span>
+					<span>Loading logs...</span>
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+templ LogEntries(logs []*store.TaskExecutionLog) {
+	for _, log := range logs {
+		<tr>
+			<td>
+				<span class={ "tag", "is-small" }>
+					{ time.UnixMicro(log.Timestamp).Format("15:04:05") }
+				</span>
+			</td>
+			<td><span class="tag is-small">{ log.Source }</span></td>
+			<td>
+				if log.Source == "container" {
+					<code>{ log.Message }</code>
+				} else {
+					<span class="is-italic">{ log.Message }</span>
+				}
+			</td>
+		</tr>
+	}
+}
+
+templ ExecutionSidebar(execution *store.TaskExecution, outputFiles []*store.TaskExecutionFile) {
+	<div class="card">
+		<div class="card-header">
+			<p class="card-header-title">
+				<span class="icon">
+					<i class="fas fa-info-circle"></i>
+				</span>
+				Details
+			</p>
+		</div>
+		<div class="card-content">
+			@ExecutionMetadata(execution)
+		</div>
+	</div>
+	if len(outputFiles) > 0 {
+		<div class="card mt-4">
+			<div class="card-header">
+				<p class="card-header-title">
+					<span class="icon">
+						<i class="fas fa-file"></i>
+					</span>
+					Outputs
+				</p>
+			</div>
+			<div class="card-content">
+				@ResponsiveFileList(execution.TaskID, execution.ID, outputFiles)
+			</div>
+		</div>
+	}
+}
+
+templ ExecutionMetadata(execution *store.TaskExecution) {
+	<div class="content">
+		<table class="table is-fullwidth">
+			<tbody>
+				<tr>
+					<td><strong>Execution ID</strong></td>
+					<td>{ fmt.Sprintf("%d", execution.ID) }</td>
+				</tr>
+				<tr>
+					<td><strong>Container ID</strong></td>
+					<td>
+						if execution.ContainerID != "" {
+							<code>{ execution.ContainerID[:12] }...</code>
+						} else {
+							<span class="has-text-grey">Not assigned</span>
+						}
+					</td>
+				</tr>
+				<tr>
+					<td><strong>Created</strong></td>
+					<td>{ execution.CreatedAt.Format("Jan 2, 2006 15:04:05") }</td>
+				</tr>
+				if execution.StartedAt != nil {
+					<tr>
+						<td><strong>Started</strong></td>
+						<td>{ execution.StartedAt.Format("Jan 2, 2006 15:04:05") }</td>
+					</tr>
+				}
+				if execution.FinishedAt != nil {
+					<tr>
+						<td><strong>Finished</strong></td>
+						<td>{ execution.FinishedAt.Format("Jan 2, 2006 15:04:05") }</td>
+					</tr>
+				}
+				if execution.ErrorMessage != "" {
+					<tr>
+						<td><strong>Error</strong></td>
+						<td><span class="has-text-danger">{ execution.ErrorMessage }</span></td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	</div>
+}
+
+templ ResponsiveFileList(taskID uint, executionID uint, files []*store.TaskExecutionFile) {
+	if len(files) == 0 {
+		<div class="has-text-centered has-text-grey">
+			<span class="icon is-large">
+				<i class="fas fa-folder-open fa-2x"></i>
+			</span>
+			<p>No output files generated</p>
+		</div>
+	} else {
+		<div class="file-list">
+			for _, file := range files {
+				@ResponsiveFileItem(taskID, executionID, *file)
+			}
+		</div>
+	}
+}
+
+templ ResponsiveFileItem(taskID uint, executionID uint, file store.TaskExecutionFile) {
+	<div class="file-item level is-mobile">
+		<div class="level-left">
+			<div class="level-item">
+				<span class="icon has-text-{ getFileTypeColor(file.MimeType) }">
+					<i class="fas fa-{ getFileTypeIcon(file.MimeType) }"></i>
+				</span>
+			</div>
+			<div class="level-item">
+				<div>
+					<p class="title is-6">{ file.Filename }</p>
+					<p class="subtitle is-7 has-text-grey">
+						{ formatFileSize(file.FileSize) } • { file.MimeType }
+					</p>
+				</div>
+			</div>
+		</div>
+		<div class="level-right">
+			<div class="level-item">
+				<a
+					href={ common.BaseURL(ctx, common.WithPathf("/tasks/%d/executions/%d/files/%s", taskID, executionID, file.Filename)) }
+					class="button is-small is-primary"
+					download
+				>
+					<span class="icon">
+						<i class="fas fa-download"></i>
+					</span>
+					<span class="is-hidden-mobile">Download</span>
+				</a>
+			</div>
+		</div>
+	</div>
+}
+
+templ StatusBadge(status store.TaskExecutionStatus) {
+	<span class={ "tag", statusClass(status) }>
+		<span class="icon">
+			<i class={ statusIcon(status) }></i>
+		</span>
+		<span>{ string(status) }</span>
+	</span>
+}
+
+// Helper functions
+
+func statusClass(status store.TaskExecutionStatus) string {
+	switch status {
+	case store.StatusSucceeded:
+		return "is-success"
+	case store.StatusFailed:
+		return "is-danger"
+	case store.StatusRunning, store.StatusContainerStarted:
+		return "is-info"
+	case store.StatusPending:
+		return "is-warning"
+	default:
+		return "is-light"
+	}
+}
+
+func statusIcon(status store.TaskExecutionStatus) string {
+	switch status {
+	case store.StatusSucceeded:
+		return "fas fa-check"
+	case store.StatusFailed:
+		return "fas fa-times"
+	case store.StatusRunning, store.StatusContainerStarted:
+		return "fas fa-spin"
+	case store.StatusPending:
+		return "fas fa-clock"
+	default:
+		return "fas fa-question"
+	}
+}
+
+func getFileTypeIcon(mimeType string) string {
+	switch {
+	case strings.HasPrefix(mimeType, "image/"):
+		return "fa-image"
+	case strings.HasPrefix(mimeType, "text/"):
+		return "fa-file-alt"
+	case strings.Contains(mimeType, "pdf"):
+		return "fa-file-pdf"
+	case strings.Contains(mimeType, "json"):
+		return "fa-file-code"
+	case strings.Contains(mimeType, "zip") || strings.Contains(mimeType, "archive"):
+		return "fa-file-archive"
+	default:
+		return "fa-file"
+	}
+}
+
+func getFileTypeColor(mimeType string) string {
+	switch {
+	case strings.HasPrefix(mimeType, "image/"):
+		return "info"
+	case strings.HasPrefix(mimeType, "text/"):
+		return "primary"
+	case strings.Contains(mimeType, "pdf"):
+		return "danger"
+	case strings.Contains(mimeType, "json"):
+		return "success"
+	default:
+		return "grey"
+	}
+}
+
+func formatFileSize(bytes int64) string {
+	const unit = 1024
+	if bytes < unit {
+		return fmt.Sprintf("%d B", bytes)
+	}
+	div, exp := int64(unit), 0
+	for n := bytes / unit; n >= unit; n /= unit {
+		div *= unit
+		exp++
+	}
+	return fmt.Sprintf("%.1f %cB", float64(bytes)/float64(div), "KMGTPE"[exp])
+}
