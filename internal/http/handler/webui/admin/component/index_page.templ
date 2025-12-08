@@ -1,0 +1,35 @@
+package component
+
+import common "github.com/bornholm/oplet/internal/http/handler/webui/common/component"
+
+type IndexPageVModel struct {
+	Navbar common.NavbarVModel
+}
+
+templ IndexPage(vmodel IndexPageVModel) {
+	@common.Page(common.WithTitle("Administration - Oplet")) {
+		<div class="container">
+			@common.Navbar(vmodel.Navbar)
+			<section class="section">
+				<div class="columns">
+					<!-- Aside Menu -->
+					<div class="column is-narrow">
+						<aside class="menu">
+							<p class="menu-label">
+								Administration
+							</p>
+							<ul class="menu-list">
+								<li><a href={ common.BaseURL(ctx, common.WithPath("/admin/")) } class="is-active">Tableau de bord</a></li>
+								<li><a href={ common.BaseURL(ctx, common.WithPath("/admin/tasks")) }>Tâches</a></li>
+							</ul>
+						</aside>
+					</div>
+					<!-- Main Content -->
+					<div class="column">
+						<section class="section"></section>
+					</div>
+				</div>
+			</section>
+		</div>
+	}
+}

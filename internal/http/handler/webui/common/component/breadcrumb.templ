@@ -1,0 +1,43 @@
+package component
+
+type BreadcrumbItem struct {
+	Label string
+	URL   string
+	Icon  string
+}
+
+type BreadcrumbVModel struct {
+	Items []BreadcrumbItem
+}
+
+templ Breadcrumb(vmodel BreadcrumbVModel) {
+	if len(vmodel.Items) > 1 {
+		<nav class="breadcrumb mb-4" aria-label="breadcrumbs">
+			<ul>
+				for i, item := range vmodel.Items {
+					<li class={ templ.KV("is-active", i == len(vmodel.Items)-1) }>
+						if i == len(vmodel.Items)-1 {
+							<a aria-current="page">
+								if item.Icon != "" {
+									<span class="icon">
+										<i class={ "fas", item.Icon }></i>
+									</span>
+								}
+								<span>{ item.Label }</span>
+							</a>
+						} else {
+							<a href={ templ.SafeURL(item.URL) }>
+								if item.Icon != "" {
+									<span class="icon">
+										<i class={ "fas", item.Icon }></i>
+									</span>
+								}
+								<span>{ item.Label }</span>
+							</a>
+						}
+					</li>
+				}
+			</ul>
+		</nav>
+	}
+}

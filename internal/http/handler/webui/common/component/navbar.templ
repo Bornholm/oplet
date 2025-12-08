@@ -1,0 +1,104 @@
+package component
+
+import (
+	"context"
+	"github.com/bornholm/oplet/internal/http/authz"
+	"github.com/bornholm/oplet/internal/store"
+	"github.com/pkg/errors"
+	"net/http"
+)
+
+type NavbarVModel struct {
+	User    *store.User
+	IsAdmin bool
+}
+
+func FillNavbarVModel(ctx context.Context, vmodel *NavbarVModel, r *http.Request) error {
+	user := User(ctx)
+	if user == nil {
+		return errors.New("could not find user in context")
+	}
+
+	vmodel.User = user
+
+	isAdmin, err := authz.Assert(ctx, user, authz.Has(authz.RoleAdmin))
+	if err != nil {
+		return errors.WithStack(err)
+	}
+
+	vmodel.IsAdmin = isAdmin
+
+	return nil
+}
+
+templ Navbar(vmodel NavbarVModel) {
+	<nav class="navbar" role="navigation" aria-label="main navigation">
+		<div class="navbar-brand">
+			<a class="navbar-item" href={ BaseURL(ctx) }>
+				<span class="has-text-weight-bold" style="vertical-align:middle">Oplet</span>
+			</a>
+			<a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbar-menu">
+				<span aria-hidden="true"></span>
+				<span aria-hidden="true"></span>
+				<span aria-hidden="true"></span>
+				<span aria-hidden="true"></span>
+			</a>
+		</div>
+		<div id="navbar-menu" class="navbar-menu">
+			<div class="navbar-start">
+				<a class="navbar-item" href={ BaseURL(ctx, WithPath("/tasks")) }>
+					<span class="icon">
+						<i class="fas fa-cubes"></i>
+					</span>
+					<span>Tasks</span>
+				</a>
+				<a class="navbar-item" href={ BaseURL(ctx, WithPath("/tasks/executions")) }>
+					<span class="icon">
+						<i class="fas fa-clock"></i>
+					</span>
+					<span>History</span>
+				</a>
+			</div>
+			<div class="navbar-end">
+				<div class="navbar-item has-dropdown is-hoverable">
+					<a class="navbar-link">
+						<span class="icon">
+							<i class="fas fa-user"></i>
+						</span>
+						<span>{ vmodel.User.DisplayName }</span>
+					</a>
+					<div class="navbar-dropdown is-right">
+						if vmodel.IsAdmin {
+							<a class="navbar-item" href={ BaseURL(ctx, WithPath("/admin")) }>
+								<span class="icon">
+									<i class="fa fa-cog"></i>
+								</span>
+								<span>Admin</span>
+							</a>
+							<hr class="navbar-divider"/>
+						}
+						<a class="navbar-item" href={ BaseURL(ctx, WithPath("/auth/logout")) }>
+							<span class="icon">
+								<i class="fa fa-sign-out"></i>
+							</span>
+							<span>Logout</span>
+						</a>
+					</div>
+				</div>
+			</div>
+		</div>
+	</nav>
+	<script type="text/javascript">
+    (function() {
+      const $navbarBurgers = Array.prototype.slice.call(document.querySelectorAll('.navbar-burger'), 0);
+      $navbarBurgers.forEach( el => {
+        el.addEventListener('click', () => {
+          const target = el.dataset.target;
+          const $target = document.getElementById(target);
+          el.classList.toggle('is-active');
+          $target.classList.toggle('is-active');
+        });
+      });
+    }())
+  </script>
+}

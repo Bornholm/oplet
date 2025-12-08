@@ -1,0 +1,134 @@
+package component
+
+import (
+	common "github.com/bornholm/oplet/internal/http/handler/webui/common/component"
+	"github.com/bornholm/oplet/internal/store"
+)
+
+type TaskListPageVModel struct {
+	Navbar common.NavbarVModel
+	Tasks  []*store.Task
+}
+
+templ TaskListPage(vmodel TaskListPageVModel) {
+	@common.Page(common.WithTitle("Gestion des tâches - Administration - Oplet")) {
+		<div class="container">
+			@common.Navbar(vmodel.Navbar)
+			<section class="section">
+				<div class="columns">
+					<!-- Aside Menu -->
+					<div class="column is-narrow">
+						<aside class="menu">
+							<p class="menu-label">
+								Administration
+							</p>
+							<ul class="menu-list">
+								<li><a href={ common.BaseURL(ctx, common.WithPath("/admin/")) }>Tableau de bord</a></li>
+								<li><a href={ common.BaseURL(ctx, common.WithPath("/admin/tasks")) } class="is-active">Tâches</a></li>
+							</ul>
+						</aside>
+					</div>
+					<!-- Main Content -->
+					<div class="column">
+						<div class="level">
+							<div class="level-left">
+								<div class="level-item">
+									<h1 class="title">Gestion des tâches</h1>
+								</div>
+							</div>
+							<div class="level-right">
+								<div class="level-item">
+									<a href={ common.BaseURL(ctx, common.WithPath("/admin/tasks/new")) } class="button is-primary">
+										<span class="icon">
+											<i class="fas fa-plus"></i>
+										</span>
+										<span>Nouvelle tâche</span>
+									</a>
+								</div>
+							</div>
+						</div>
+						if len(vmodel.Tasks) == 0 {
+							<div class="notification">
+								<p>Aucune tâche n'est actuellement configurée.</p>
+								<p>
+									<a href={ common.BaseURL(ctx, common.WithPath("/admin/tasks/new")) } class="button is-primary is-small">
+										Créer la première tâche
+									</a>
+								</p>
+							</div>
+						} else {
+							<div class="table-container">
+								<table class="table is-fullwidth is-striped is-hoverable">
+									<thead>
+										<tr>
+											<th>Nom</th>
+											<th>Auteur</th>
+											<th>Image</th>
+											<th>Description</th>
+											<th>Actions</th>
+										</tr>
+									</thead>
+									<tbody>
+										for _, task := range vmodel.Tasks {
+											<tr>
+												<td>
+													<strong>{ task.Name }</strong>
+												</td>
+												<td>{ task.Author }</td>
+												<td>
+													<code class="is-size-7">{ task.ImageRef }</code>
+												</td>
+												<td>
+													if len(task.Description) > 100 {
+														{ task.Description[:100] }...
+													} else {
+														{ task.Description }
+													}
+												</td>
+												<td>
+													<div class="buttons are-small">
+														<a href={ common.BaseURL(ctx, common.WithPath("/admin/tasks/", common.FormatID(task.ID), "/edit")) } class="button is-info">
+															<span class="icon">
+																<i class="fas fa-edit"></i>
+															</span>
+															<span>Modifier</span>
+														</a>
+														<button class="button is-danger" onclick={ deleteTask(task.ID) }>
+															<span class="icon">
+																<i class="fas fa-trash"></i>
+															</span>
+															<span>Supprimer</span>
+														</button>
+													</div>
+												</td>
+											</tr>
+										}
+									</tbody>
+								</table>
+							</div>
+						}
+					</div>
+				</div>
+			</section>
+		</div>
+	}
+}
+
+script deleteTask(taskID uint) {
+	if (confirm('Êtes-vous sûr de vouloir supprimer cette tâche ? Cette action est irréversible.')) {
+		fetch('/admin/tasks/' + taskID, {
+			method: 'DELETE',
+			headers: {
+				'Content-Type': 'application/json',
+			}
+		}).then(response => {
+			if (response.ok) {
+				location.reload();
+			} else {
+				alert('Erreur lors de la suppression de la tâche');
+			}
+		}).catch(error => {
+			alert('Erreur lors de la suppression de la tâche');
+		});
+	}
+}
