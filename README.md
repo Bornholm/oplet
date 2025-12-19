@@ -14,7 +14,7 @@ docker run --rm -it -p 3002:3002 -v /var/run/docker.sock:/var/run/docker.sock -v
 With the following `.env` file:
 
 ```shell
-OPLET_HTTP_BASE_URL=http://<public_ip>:3002
+OPLET_HTTP_BASE_URL=http://<public_host>:3002
 OPLET_HTTP_SESSION_KEYS=<32_bytes_session_signing_key>
 
 # OpenID Identity Provider configuration
@@ -24,3 +24,9 @@ OPLET_HTTP_AUTHN_PROVIDERS_GOOGLE_SECRET=<google_openid_secret>
 # User/roles mappings
 OPLET_HTTP_AUTHN_ROLE_MAPPINGS=<email_user_1>:admin,<email_user_2>:user
 ```
+
+## Documentation
+
+### Tutorials
+
+- [Creating an Oplet task](./doc/tutorials/creating-an-oplet-task.md)
