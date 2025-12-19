@@ -247,6 +247,10 @@ func (e *DockerExecutor) pullImage(ctx context.Context, imageRef string) error {
 	}
 	defer reader.Close()
 
+	if _, err := io.ReadAll(reader); err != nil {
+		return errors.WithStack(err)
+	}
+
 	e.logger.Info("image pulled successfully", "image", imageRef)
 	return nil
 }
