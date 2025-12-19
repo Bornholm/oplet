@@ -238,9 +238,10 @@ templ ResponsiveFileItem(taskID uint, executionID uint, file store.TaskExecution
 		<div class="level-right">
 			<div class="level-item">
 				<a
+					download={ file.Filename }
 					href={ common.BaseURL(ctx, common.WithPathf("/tasks/%d/executions/%d/files/%s", taskID, executionID, file.Filename)) }
 					class="button is-small is-primary"
-					download
+					target="_blank"
 				>
 					<span class="icon">
 						<i class="fas fa-download"></i>

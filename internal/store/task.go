@@ -12,9 +12,9 @@ type Task struct {
 	Author         string `gorm:"index"`
 	Name           string `gorm:"index"`
 	Description    string
-	Configurations []*TaskConfiguration
+	Configurations []*TaskConfiguration `gorm:"constraint:OnDelete:CASCADE;"`
 
-	Executions []*TaskExecution
+	Executions []*TaskExecution `gorm:"constraint:OnDelete:CASCADE;"`
 }
 
 type TaskExecution struct {
@@ -40,8 +40,8 @@ type TaskExecution struct {
 	InputParameters string `gorm:"type:text"` // JSON of form inputs
 
 	// Logs and Files
-	Logs        []TaskExecutionLog  `gorm:"foreignKey:ExecutionID"`
-	OutputFiles []TaskExecutionFile `gorm:"foreignKey:ExecutionID"`
+	Logs        []TaskExecutionLog  `gorm:"foreignKey:ExecutionID;constraint:OnDelete:CASCADE;"`
+	OutputFiles []TaskExecutionFile `gorm:"foreignKey:ExecutionID;constraint:OnDelete:CASCADE;"`
 }
 
 type TaskExecutionStatus string
@@ -67,6 +67,7 @@ const (
 
 type TaskExecutionLog struct {
 	gorm.Model
+	Execution   *TaskExecution
 	ExecutionID uint   `gorm:"index"`
 	Timestamp   int64  `gorm:"index"`
 	Source      string // "container", "system"
@@ -75,6 +76,7 @@ type TaskExecutionLog struct {
 
 type TaskExecutionFile struct {
 	gorm.Model
+	Execution   *TaskExecution
 	ExecutionID uint `gorm:"index"`
 	Filename    string
 	FilePath    string // Filesystem path

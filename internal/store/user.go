@@ -10,7 +10,7 @@ type User struct {
 	Provider    string   `gorm:"index"`
 	Roles       []string `gorm:"-"`
 
-	TaskExecutions []*TaskExecution
+	TaskExecutions []*TaskExecution `gorm:"constraint:OnDelete:CASCADE;"`
 }
 
 func NewUser(provider, subject, displayName string, roles ...string) *User {
