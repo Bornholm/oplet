@@ -25,6 +25,7 @@ templ TaskListPage(vmodel TaskListPageVModel) {
 							<ul class="menu-list">
 								<li><a href={ common.BaseURL(ctx, common.WithPath("/admin/")) }>Dashboard</a></li>
 								<li><a href={ common.BaseURL(ctx, common.WithPath("/admin/tasks")) } class="is-active">Tasks</a></li>
+								<li><a href={ common.BaseURL(ctx, common.WithPath("/admin/users")) }>Users</a></li>
 							</ul>
 						</aside>
 					</div>
@@ -33,7 +34,7 @@ templ TaskListPage(vmodel TaskListPageVModel) {
 						<div class="level">
 							<div class="level-left">
 								<div class="level-item">
-									<h1 class="title">Task management</h1>
+									<h1 class="title">Tasks</h1>
 								</div>
 							</div>
 							<div class="level-right">

@@ -6,18 +6,24 @@ type User struct {
 	gorm.Model
 
 	DisplayName string
-	Subject     string   `gorm:"index"`
-	Provider    string   `gorm:"index"`
-	Roles       []string `gorm:"-"`
+	Subject     string `gorm:"index"`
+	Provider    string `gorm:"index"`
+	Email       string `gorm:"index"`
+	Role        string `gorm:"default:'user'"`
+	IsActive    bool   `gorm:"index"`
 
 	TaskExecutions []*TaskExecution `gorm:"constraint:OnDelete:CASCADE;"`
 }
 
-func NewUser(provider, subject, displayName string, roles ...string) *User {
-	return &User{
+func NewUser(provider, subject, displayName, email, role string) *User {
+	user := &User{
 		DisplayName: displayName,
 		Subject:     subject,
 		Provider:    provider,
-		Roles:       roles,
+		IsActive:    true,
 	}
+
+	user.Role = role
+
+	return user
 }

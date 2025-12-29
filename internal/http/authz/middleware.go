@@ -4,7 +4,6 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
-	"slices"
 
 	httpCtx "github.com/bornholm/oplet/internal/http/context"
 	"github.com/bornholm/oplet/internal/store"
@@ -25,7 +24,7 @@ func Is(provider, subject string) AssertFunc {
 
 func Has(role string) AssertFunc {
 	return func(ctx context.Context, user *store.User) (bool, error) {
-		return user != nil && slices.Contains(user.Roles, role), nil
+		return user != nil && user.Role == role, nil
 	}
 }
 

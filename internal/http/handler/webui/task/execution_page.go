@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -196,7 +195,7 @@ func (h *Handler) fillExecutionPageViewModel(r *http.Request, executionID uint) 
 	var exec *store.TaskExecution
 	var err error
 
-	if user != nil && slices.Contains(user.Roles, authz.RoleAdmin) {
+	if user != nil && user.Role == authz.RoleAdmin {
 		// Admin can access any execution
 		exec, err = executionRepo.GetByID(ctx, executionID)
 	} else if user != nil {
@@ -419,7 +418,7 @@ func (h *Handler) canAccessExecution(ctx context.Context, executionID uint) bool
 	}
 
 	// Check if user is admin - admins can access all executions
-	if slices.Contains(user.Roles, authz.RoleAdmin) {
+	if user.Role == authz.RoleAdmin {
 		return true
 	}
 

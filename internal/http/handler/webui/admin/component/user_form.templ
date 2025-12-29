@@ -1,0 +1,245 @@
+package component
+
+import (
+	"github.com/bornholm/oplet/internal/http/authz"
+	common "github.com/bornholm/oplet/internal/http/handler/webui/common/component"
+	"github.com/bornholm/oplet/internal/store"
+	"strconv"
+)
+
+type UserFormPageVModel struct {
+	Navbar common.NavbarVModel
+	User   *store.User
+}
+
+templ UserFormPage(vmodel UserFormPageVModel) {
+	@common.Page(common.WithTitle("Edit User - Administration - Oplet")) {
+		<div class="container">
+			@common.Navbar(vmodel.Navbar)
+			<section class="section">
+				<div class="columns">
+					<!-- Aside Menu -->
+					<div class="column is-narrow">
+						<aside class="menu">
+							<p class="menu-label">
+								Administration
+							</p>
+							<ul class="menu-list">
+								<li><a href={ common.BaseURL(ctx, common.WithPath("/admin/")) }>Dashboard</a></li>
+								<li><a href={ common.BaseURL(ctx, common.WithPath("/admin/tasks")) }>Tasks</a></li>
+								<li><a href={ common.BaseURL(ctx, common.WithPath("/admin/users")) } class="is-active">Users</a></li>
+							</ul>
+						</aside>
+					</div>
+					<!-- Main Content -->
+					<div class="column">
+						<div class="level">
+							<div class="level-left">
+								<div class="level-item">
+									<h1 class="title">Edit User</h1>
+								</div>
+							</div>
+							<div class="level-right">
+								<div class="level-item">
+									<a href={ common.BaseURL(ctx, common.WithPath("/admin/users")) } class="button">
+										<span class="icon">
+											<i class="fas fa-arrow-left"></i>
+										</span>
+										<span>Back to the list</span>
+									</a>
+								</div>
+							</div>
+						</div>
+						<div class="columns">
+							<div class="column is-8">
+								<!-- User Information Card -->
+								<div class="card">
+									<div class="card-header">
+										<p class="card-header-title">
+											<span class="icon">
+												<i class="fas fa-user"></i>
+											</span>
+											<span>User Information</span>
+										</p>
+									</div>
+									<div class="card-content">
+										<div class="field">
+											<label class="label">Display Name</label>
+											<div class="control">
+												<input class="input" type="text" value={ vmodel.User.DisplayName } readonly/>
+											</div>
+										</div>
+										<div class="field">
+											<label class="label">Provider</label>
+											<div class="control">
+												<input class="input" type="text" value={ vmodel.User.Provider } readonly/>
+											</div>
+										</div>
+										<div class="field">
+											<label class="label">Subject</label>
+											<div class="control">
+												<input class="input" type="text" value={ vmodel.User.Subject } readonly/>
+											</div>
+										</div>
+										<div class="field">
+											<label class="label">Email</label>
+											<div class="control">
+												<input class="input" type="text" value={ vmodel.User.Email } readonly/>
+											</div>
+										</div>
+										<div class="field">
+											<label class="label">Created At</label>
+											<div class="control">
+												<input class="input" type="text" value={ vmodel.User.CreatedAt.Format("2006-01-02 15:04:05") } readonly/>
+											</div>
+										</div>
+									</div>
+								</div>
+								<!-- Role Management Card -->
+								<div class="card mt-5">
+									<div class="card-header">
+										<p class="card-header-title">
+											<span class="icon">
+												<i class="fas fa-user-cog"></i>
+											</span>
+											<span>Role Management</span>
+										</p>
+									</div>
+									<div class="card-content">
+										<form method="POST" action={ common.BaseURL(ctx, common.WithPath("/admin/users/", strconv.FormatUint(uint64(vmodel.User.ID), 10), "/role")) }>
+											<div class="field">
+												<label class="label">Current Role</label>
+												<div class="control">
+													<div class="select is-fullwidth">
+														<select name="role">
+															<option value={ authz.RoleUser } selected?={ vmodel.User.Role == authz.RoleUser }>User</option>
+															<option value={ authz.RoleAdmin } selected?={ vmodel.User.Role == authz.RoleAdmin }>Admin</option>
+														</select>
+													</div>
+												</div>
+												<p class="help">
+													if vmodel.User.Role == authz.RoleAdmin {
+														This user has administrative privileges and can access the admin panel.
+													} else {
+														This user has standard privileges and can only access regular features.
+													}
+												</p>
+											</div>
+											<div class="field">
+												<div class="control">
+													<button class="button is-primary" type="submit">
+														<span class="icon">
+															<i class="fas fa-save"></i>
+														</span>
+														<span>Update Role</span>
+													</button>
+												</div>
+											</div>
+										</form>
+									</div>
+								</div>
+								<!-- Access Control Card -->
+								<div class="card mt-5">
+									<div class="card-header">
+										<p class="card-header-title">
+											<span class="icon">
+												<i class="fas fa-shield-alt"></i>
+											</span>
+											<span>Access Control</span>
+										</p>
+									</div>
+									<div class="card-content">
+										<form method="POST" action={ common.BaseURL(ctx, common.WithPath("/admin/users/", strconv.FormatUint(uint64(vmodel.User.ID), 10), "/status")) }>
+											<div class="field">
+												<label class="label">Account Status</label>
+												<div class="control">
+													<label class="radio">
+														<input type="radio" name="is_active" value="true" checked?={ vmodel.User.IsActive }/>
+														<span class="icon has-text-success">
+															<i class="fas fa-check-circle"></i>
+														</span>
+														Active - User can access the application
+													</label>
+												</div>
+												<div class="control">
+													<label class="radio">
+														<input type="radio" name="is_active" value="false" checked?={ !vmodel.User.IsActive }/>
+														<span class="icon has-text-danger">
+															<i class="fas fa-times-circle"></i>
+														</span>
+														Inactive - User cannot access the application
+													</label>
+												</div>
+											</div>
+											<div class="field">
+												<div class="control">
+													<button class="button is-primary" type="submit">
+														<span class="icon">
+															<i class="fas fa-user-check"></i>
+														</span>
+														<span>Update Status</span>
+													</button>
+												</div>
+											</div>
+										</form>
+									</div>
+								</div>
+							</div>
+							<div class="column is-4">
+								<!-- Status Summary Card -->
+								<div class="card">
+									<div class="card-header">
+										<p class="card-header-title">
+											<span class="icon">
+												<i class="fas fa-info-circle"></i>
+											</span>
+											<span>Status Summary</span>
+										</p>
+									</div>
+									<div class="card-content">
+										<div class="field">
+											<label class="label">Current Role</label>
+											if vmodel.User.Role == authz.RoleAdmin {
+												<span class="tag is-danger is-large">
+													<span class="icon">
+														<i class="fas fa-user-shield"></i>
+													</span>
+													<span>Administrator</span>
+												</span>
+											} else {
+												<span class="tag is-info is-large">
+													<span class="icon">
+														<i class="fas fa-user"></i>
+													</span>
+													<span>User</span>
+												</span>
+											}
+										</div>
+										<div class="field">
+											<label class="label">Account Status</label>
+											if vmodel.User.IsActive {
+												<span class="tag is-success is-large">
+													<span class="icon">
+														<i class="fas fa-check-circle"></i>
+													</span>
+													<span>Active</span>
+												</span>
+											} else {
+												<span class="tag is-warning is-large">
+													<span class="icon">
+														<i class="fas fa-times-circle"></i>
+													</span>
+													<span>Inactive</span>
+												</span>
+											}
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
+		</div>
+	}
+}

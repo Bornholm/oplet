@@ -1,0 +1,117 @@
+package component
+
+import (
+	"github.com/bornholm/oplet/internal/http/authz"
+	common "github.com/bornholm/oplet/internal/http/handler/webui/common/component"
+	"github.com/bornholm/oplet/internal/store"
+	"strconv"
+)
+
+type UserListPageVModel struct {
+	Navbar     common.NavbarVModel
+	Users      []*store.User
+	TotalUsers int64
+}
+
+templ UserListPage(vmodel UserListPageVModel) {
+	@common.Page(common.WithTitle("User management - Admin - Oplet")) {
+		<div class="container">
+			@common.Navbar(vmodel.Navbar)
+			<section class="section">
+				<div class="columns">
+					<!-- Aside Menu -->
+					<div class="column is-narrow">
+						<aside class="menu">
+							<p class="menu-label">
+								Administration
+							</p>
+							<ul class="menu-list">
+								<li><a href={ common.BaseURL(ctx, common.WithPath("/admin/")) }>Dashboard</a></li>
+								<li><a href={ common.BaseURL(ctx, common.WithPath("/admin/tasks")) }>Tasks</a></li>
+								<li><a href={ common.BaseURL(ctx, common.WithPath("/admin/users")) } class="is-active">Users</a></li>
+							</ul>
+						</aside>
+					</div>
+					<!-- Main Content -->
+					<div class="column">
+						<div class="level">
+							<div class="level-left">
+								<div class="level-item">
+									<h1 class="title">Users</h1>
+								</div>
+							</div>
+							<div class="level-right">
+								<div class="level-item">
+									<span class="tag is-large">{ strconv.FormatInt(vmodel.TotalUsers, 10) } users</span>
+								</div>
+							</div>
+						</div>
+						if len(vmodel.Users) == 0 {
+							<div class="notification">
+								<p>No users found.</p>
+							</div>
+						} else {
+							<div class="table-container">
+								<table class="table is-fullwidth is-striped is-hoverable">
+									<thead>
+										<tr>
+											<th>Display Name</th>
+											<th>Provider</th>
+											<th>Email</th>
+											<th>Role</th>
+											<th>Status</th>
+											<th>Created</th>
+											<th>Actions</th>
+										</tr>
+									</thead>
+									<tbody>
+										for _, user := range vmodel.Users {
+											<tr>
+												<td>
+													<strong>{ user.DisplayName }</strong>
+												</td>
+												<td>
+													<span class="tag">{ user.Provider }</span>
+												</td>
+												<td>
+													<code class="is-size-7">{ user.Email }</code>
+												</td>
+												<td>
+													if user.Role == authz.RoleAdmin {
+														<span class="tag is-danger">Admin</span>
+													} else {
+														<span class="tag is-info">User</span>
+													}
+												</td>
+												<td>
+													if user.IsActive {
+														<span class="tag is-success">Active</span>
+													} else {
+														<span class="tag is-warning">Inactive</span>
+													}
+												</td>
+												<td>
+													<span class="is-size-7">{ user.CreatedAt.Format("2006-01-02 15:04") }</span>
+												</td>
+												<td>
+													<div class="buttons are-small">
+														<a href={ common.BaseURL(ctx, common.WithPath("/admin/users/", strconv.FormatUint(uint64(user.ID), 10), "/edit")) } class="button is-info">
+															<span class="icon">
+																<i class="fas fa-edit"></i>
+															</span>
+															<span>Edit</span>
+														</a>
+													</div>
+												</td>
+											</tr>
+										}
+									</tbody>
+								</table>
+							</div>
+						}
+					</div>
+				</div>
+			</section>
+		</div>
+	}
+}

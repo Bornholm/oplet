@@ -37,14 +37,21 @@ func NewHandler(store *store.Store, taskProvider task.Provider, fileStorage *fil
 	// Admin-only middleware - only admins can access admin pages
 	assertAdmin := authz.Middleware(http.HandlerFunc(h.getForbiddenPage), authz.Has(authz.RoleAdmin))
 
-	// Admin routes
-	h.mux.Handle("GET /", assertAdmin(http.HandlerFunc(redirect("/admin/tasks"))))
+	h.mux.Handle("GET /", assertAdmin(http.HandlerFunc(redirect("/admin/users"))))
+
+	// Task management routes
 	h.mux.Handle("GET /tasks", assertAdmin(http.HandlerFunc(h.getTaskListPage)))
 	h.mux.Handle("GET /tasks/new", assertAdmin(http.HandlerFunc(h.getTaskFormPage)))
 	h.mux.Handle("POST /tasks/new", assertAdmin(http.HandlerFunc(h.handleTaskFormSubmission)))
 	h.mux.Handle("GET /tasks/{taskID}/edit", assertAdmin(http.HandlerFunc(h.getTaskFormPage)))
 	h.mux.Handle("POST /tasks/{taskID}/edit", assertAdmin(http.HandlerFunc(h.handleTaskFormSubmission)))
 	h.mux.Handle("DELETE /tasks/{taskID}", assertAdmin(http.HandlerFunc(h.handleTaskDeletion)))
+
+	// User management routes
+	h.mux.Handle("GET /users", assertAdmin(http.HandlerFunc(h.getUserListPage)))
+	h.mux.Handle("GET /users/{userID}/edit", assertAdmin(http.HandlerFunc(h.getUserFormPage)))
+	h.mux.Handle("POST /users/{userID}/role", assertAdmin(http.HandlerFunc(h.handleUserRoleUpdate)))
+	h.mux.Handle("POST /users/{userID}/status", assertAdmin(http.HandlerFunc(h.handleUserStatusUpdate)))
 
 	return h
 }

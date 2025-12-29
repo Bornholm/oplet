@@ -38,21 +38,15 @@ func (h *Handler) handleProviderCallback(w http.ResponseWriter, r *http.Request)
 		DisplayName: getUserDisplayName(gothUser),
 	}
 
-	rawSubject, exists := gothUser.RawData["sub"]
-	if !exists {
-		slog.ErrorContext(r.Context(), "could not authenticate user", slog.Any("error", errors.New("user subject missing")))
-		http.Redirect(w, r, "/auth/logout", http.StatusTemporaryRedirect)
-		return
+	rawSubject := gothUser.RawData["sub"]
+
+	if subject, ok := rawSubject.(string); ok {
+		user.Subject = subject
 	}
 
-	subject, ok := rawSubject.(string)
-	if !ok {
-		slog.ErrorContext(r.Context(), "could not authenticate user", slog.Any("error", errors.Errorf("unexpected subject type '%T'", rawSubject)))
-		http.Redirect(w, r, "/auth/logout", http.StatusTemporaryRedirect)
-		return
+	if user.Subject == "" {
+		user.Subject = gothUser.UserID
 	}
-
-	user.Subject = subject
 
 	if user.Subject == "" {
 		slog.ErrorContext(r.Context(), "could not authenticate user", slog.Any("error", errors.New("user subject missing")))

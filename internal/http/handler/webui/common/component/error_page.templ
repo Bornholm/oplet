@@ -22,6 +22,8 @@ templ ErrorPage(vmodel ErrorPageVModel) {
 						{ vmodel.Message }
 						<p class="has-text-centered mt-5">
 							<a href={ BaseURL(ctx) }>Back to home page</a>
+							<span>| </span>
+							<a href={ BaseURL(ctx, WithPath("/auth/logout")) }>Logout</a>
 							for _, l := range vmodel.Links {
 								<span>| </span>
 								<a href={ templ.SafeURL(l.URL) }>{ l.Label }</a>
