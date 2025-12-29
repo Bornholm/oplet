@@ -118,7 +118,7 @@ func (e *DockerExecutor) Execute(ctx context.Context, req task.ExecutionRequest)
 			execution.State = task.ExecutionStateUploadingFiles
 			onChange(execution)
 
-			if err := e.uploadFiles(ctx, containerID, req.InputsDir, req.Inputs); err != nil {
+			if err := e.uploadFiles(ctx, containerID, task.InputsDir, req.Inputs); err != nil {
 				execution.State = task.ExecutionStateFailed
 				execution.Error = &task.ExecutionError{
 					Type:        task.ErrorTypeFileUploadFailed,
@@ -200,7 +200,7 @@ func (e *DockerExecutor) Execute(ctx context.Context, req task.ExecutionRequest)
 			onChange(execution)
 
 			// Download output files
-			outputFiles, close, err := e.downloadFiles(ctx, containerID, req.OutputsDir)
+			outputFiles, close, err := e.downloadFiles(ctx, containerID, task.OutputsDir)
 			if err != nil {
 				execution.State = task.ExecutionStateFailed
 				execution.Error = &task.ExecutionError{
@@ -310,12 +310,12 @@ func (e *DockerExecutor) createContainer(ctx context.Context, runID string, req 
 		{
 			Type:   mount.TypeVolume,
 			Source: "oplet-inputs-" + runID,
-			Target: req.InputsDir,
+			Target: task.InputsDir,
 		},
 		{
 			Type:   mount.TypeVolume,
 			Source: "oplet-outputs-" + runID,
-			Target: req.OutputsDir,
+			Target: task.OutputsDir,
 		},
 	}
 

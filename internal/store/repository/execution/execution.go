@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/bornholm/oplet/internal/crypto"
 	"github.com/bornholm/oplet/internal/store"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
@@ -13,6 +14,13 @@ import (
 
 func (r *Repository) Create(ctx context.Context, execution *store.TaskExecution) error {
 	return r.store.WithDatabase(ctx, func(ctx context.Context, db *gorm.DB) error {
+		token, err := crypto.RandomToken(tokenSize)
+		if err != nil {
+			return errors.WithStack(err)
+		}
+
+		execution.RunnerToken = token
+
 		if err := db.Create(execution).Error; err != nil {
 			return errors.WithStack(err)
 		}

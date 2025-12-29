@@ -10,6 +10,7 @@ type Config struct {
 	HTTP    HTTP    `envPrefix:"HTTP_"`
 	Storage Storage `envPrefix:"STORAGE_"`
 	Seed    Seed    `envPrefix:"SEED_"`
+	Runner  Runner  `envPrefix:"RUNNER_"`
 }
 
 func Parse() (*Config, error) {

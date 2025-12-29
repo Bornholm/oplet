@@ -6,7 +6,7 @@ watch: tools/modd/bin/modd
 run-with-env: .env
 	( set -o allexport && source .env && set +o allexport && $(value CMD))
 
-build: build-server
+build: build-server build-runner
 
 build-%: generate
 	CGO_ENABLED=0 \

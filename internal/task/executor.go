@@ -10,15 +10,17 @@ import (
 	"github.com/pkg/errors"
 )
 
+const (
+	InputsDir  string = "/oplet/inputs"
+	OutputsDir string = "/oplet/outputs"
+)
+
 // ExecutionRequest represents a container execution request
 type ExecutionRequest struct {
 	ImageRef    string                   // Docker image reference
 	Environment map[string]string        // Environment variables
 	Inputs      map[string]io.ReadCloser // Files to upload to container
 	Timeout     time.Duration            // Execution timeout (optional)
-
-	InputsDir  string
-	OutputsDir string
 
 	OnChange func(Execution)
 }

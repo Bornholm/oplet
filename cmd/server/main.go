@@ -43,20 +43,27 @@ func main() {
 	}()
 
 	if err := setup.SeedFromConfig(ctx, conf); err != nil {
-		slog.ErrorContext(ctx, "could not seed store", slog.Any("error", errors.WithStack(err)))
+		slog.ErrorContext(ctx, "could not seed store", slogx.Error(errors.WithStack(err)))
 		os.Exit(1)
+	}
+
+	if conf.Runner.Enabled {
+		if err := setup.StartEmbeddedRunner(ctx, conf); err != nil {
+			slog.ErrorContext(ctx, "could start embedded runner", slogx.Error(errors.WithStack(err)))
+			os.Exit(1)
+		}
 	}
 
 	server, err := setup.NewHTTPServerFromConfig(ctx, conf)
 	if err != nil {
-		slog.ErrorContext(ctx, "could not setup http server", slog.Any("error", errors.WithStack(err)))
+		slog.ErrorContext(ctx, "could not setup http server", slogx.Error(errors.WithStack(err)))
 		os.Exit(1)
 	}
 
-	slog.InfoContext(ctx, "starting server", slog.Any("address", conf.HTTP.Address))
+	slog.InfoContext(ctx, "starting server", slog.String("address", conf.HTTP.Address))
 
 	if err := server.Run(ctx); err != nil {
-		slog.Error("could not run server", slog.Any("error", errors.WithStack(err)))
+		slog.Error("could not run server", slogx.Error(errors.WithStack(err)))
 		os.Exit(1)
 	}
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/bornholm/oplet/internal/config"
 	"github.com/bornholm/oplet/internal/http"
 	"github.com/bornholm/oplet/internal/http/handler/metrics"
+	"github.com/bornholm/oplet/internal/http/handler/runner"
 	"github.com/bornholm/oplet/internal/http/handler/webui"
 	"github.com/bornholm/oplet/internal/http/handler/webui/common"
 	"github.com/pkg/errors"
@@ -55,8 +56,10 @@ func NewHTTPServerFromConfig(ctx context.Context, conf *config.Config) (*http.Se
 		return nil, errors.Wrap(err, "could not configure task executor")
 	}
 
-	webui := webui.NewHandler(store, taskProvider, taskExecutor, fileStorage, slog.Default())
+	runner := runner.NewHandler(store, taskProvider, fileStorage, slog.Default())
+	options = append(options, http.WithMount("/runner/", runner))
 
+	webui := webui.NewHandler(store, taskProvider, taskExecutor, fileStorage, slog.Default())
 	options = append(options, http.WithMount("/", authnMiddleware(authzMiddleware(webui))))
 
 	// Create HTTP server

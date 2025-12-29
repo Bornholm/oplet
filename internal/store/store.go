@@ -20,6 +20,7 @@ var models = []any{
 	&TaskExecutionLog{},
 	&TaskExecutionFile{},
 	&TaskConfiguration{},
+	&Runner{},
 }
 
 type Store struct {

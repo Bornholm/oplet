@@ -32,6 +32,8 @@ type TaskExecution struct {
 	ExitCode     *int                // Nullable until completion
 	ErrorMessage string              `gorm:"type:text"`
 
+	RunnerToken string `gorm:"unique"`
+
 	// Timing
 	StartedAt  *time.Time
 	FinishedAt *time.Time

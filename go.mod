@@ -5,6 +5,7 @@ go 1.25.1
 require (
 	github.com/a-h/templ v0.3.960
 	github.com/caarlos0/env/v11 v11.3.1
+	github.com/davecgh/go-spew v1.1.1
 	github.com/docker/docker v28.5.2+incompatible
 	github.com/gabriel-vasile/mimetype v1.4.11
 	github.com/glebarez/go-sqlite v1.21.2
