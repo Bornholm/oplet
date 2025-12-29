@@ -53,6 +53,16 @@ func NewHandler(store *store.Store, taskProvider task.Provider, fileStorage *fil
 	h.mux.Handle("POST /users/{userID}/role", assertAdmin(http.HandlerFunc(h.handleUserRoleUpdate)))
 	h.mux.Handle("POST /users/{userID}/status", assertAdmin(http.HandlerFunc(h.handleUserStatusUpdate)))
 
+	// Runner management routes
+	h.mux.Handle("GET /runners", assertAdmin(http.HandlerFunc(h.getRunnerListPage)))
+	h.mux.Handle("GET /runners/new", assertAdmin(http.HandlerFunc(h.getRunnerFormPage)))
+	h.mux.Handle("POST /runners/new", assertAdmin(http.HandlerFunc(h.handleRunnerFormSubmission)))
+	h.mux.Handle("GET /runners/{runnerID}/edit", assertAdmin(http.HandlerFunc(h.getRunnerFormPage)))
+	h.mux.Handle("POST /runners/{runnerID}/edit", assertAdmin(http.HandlerFunc(h.handleRunnerFormSubmission)))
+	h.mux.Handle("DELETE /runners/{runnerID}", assertAdmin(http.HandlerFunc(h.handleRunnerDeletion)))
+	h.mux.Handle("POST /runners/{runnerID}/regenerate-token", assertAdmin(http.HandlerFunc(h.handleRunnerTokenRegeneration)))
+	h.mux.Handle("GET /runners/validate-name", assertAdmin(http.HandlerFunc(h.handleRunnerNameValidation)))
+
 	return h
 }
 

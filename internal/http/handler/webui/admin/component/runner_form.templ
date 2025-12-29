@@ -1,0 +1,408 @@
+package component
+
+import (
+	common "github.com/bornholm/oplet/internal/http/handler/webui/common/component"
+	"github.com/bornholm/oplet/internal/store"
+	"strconv"
+)
+
+type RunnerFormPageVModel struct {
+	Navbar common.NavbarVModel
+	Runner *store.Runner
+	IsEdit bool
+}
+
+templ RunnerFormPage(vmodel RunnerFormPageVModel) {
+	if vmodel.IsEdit {
+		@common.Page(common.WithTitle("Edit Runner - Administration - Oplet")) {
+			@runnerFormContent(vmodel)
+		}
+	} else {
+		@common.Page(common.WithTitle("New Runner - Administration - Oplet")) {
+			@runnerFormContent(vmodel)
+		}
+	}
+}
+
+templ runnerFormContent(vmodel RunnerFormPageVModel) {
+	<div class="container">
+		@common.Navbar(vmodel.Navbar)
+		<section class="section">
+			<div class="columns">
+				<!-- Aside Menu -->
+				<div class="column is-narrow">
+					<aside class="menu">
+						<p class="menu-label">
+							Administration
+						</p>
+						<ul class="menu-list">
+							<li><a href={ common.BaseURL(ctx, common.WithPath("/admin/")) }>Dashboard</a></li>
+							<li><a href={ common.BaseURL(ctx, common.WithPath("/admin/tasks")) }>Tasks</a></li>
+							<li><a href={ common.BaseURL(ctx, common.WithPath("/admin/users")) }>Users</a></li>
+							<li><a href={ common.BaseURL(ctx, common.WithPath("/admin/runners")) } class="is-active">Runners</a></li>
+						</ul>
+					</aside>
+				</div>
+				<!-- Main Content -->
+				<div class="column">
+					<div class="level">
+						<div class="level-left">
+							<div class="level-item">
+								<h1 class="title">
+									if vmodel.IsEdit {
+										Edit Runner
+									} else {
+										New Runner
+									}
+								</h1>
+							</div>
+						</div>
+						<div class="level-right">
+							<div class="level-item">
+								<a href={ common.BaseURL(ctx, common.WithPath("/admin/runners")) } class="button">
+									<span class="icon">
+										<i class="fas fa-arrow-left"></i>
+									</span>
+									<span>Back to the list</span>
+								</a>
+							</div>
+						</div>
+					</div>
+					<div class="columns">
+						<div class="column is-8">
+							@runnerInfoCard(vmodel)
+							if vmodel.IsEdit {
+								@runnerTokenCard(vmodel)
+								@runnerDangerCard(vmodel)
+							}
+						</div>
+						<div class="column is-4">
+							if vmodel.IsEdit {
+								@runnerStatusCard(vmodel)
+							}
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+	</div>
+}
+
+templ runnerInfoCard(vmodel RunnerFormPageVModel) {
+	<div class="card">
+		<div class="card-header">
+			<p class="card-header-title">
+				<span class="icon">
+					<i class="fas fa-server"></i>
+				</span>
+				<span>Runner Information</span>
+			</p>
+		</div>
+		<div class="card-content">
+			if vmodel.IsEdit {
+				<form method="POST" action={ common.BaseURL(ctx, common.WithPath("/admin/runners/", strconv.FormatUint(uint64(vmodel.Runner.ID), 10), "/edit")) }>
+					@runnerFormFields(vmodel)
+				</form>
+			} else {
+				<form method="POST" action={ common.BaseURL(ctx, common.WithPath("/admin/runners/new")) }>
+					@runnerFormFields(vmodel)
+				</form>
+			}
+		</div>
+	</div>
+}
+
+templ runnerFormFields(vmodel RunnerFormPageVModel) {
+	<div class="field">
+		<label class="label">Runner Name</label>
+		<div class="control has-icons-left">
+			if vmodel.IsEdit {
+				<input
+					class="input"
+					type="text"
+					name="name"
+					value={ vmodel.Runner.Name }
+					placeholder="Enter runner name"
+					required
+					onblur={ validateRunnerName(vmodel.Runner.ID) }
+				/>
+			} else {
+				<input
+					class="input"
+					type="text"
+					name="name"
+					value=""
+					placeholder="Enter runner name"
+					required
+					onblur={ validateRunnerName(0) }
+				/>
+			}
+			<span class="icon is-small is-left">
+				<i class="fas fa-tag"></i>
+			</span>
+		</div>
+		<p class="help" id="name-help">Choose a unique name for this runner</p>
+	</div>
+	if vmodel.IsEdit {
+		<div class="field">
+			<label class="label">Runner ID</label>
+			<div class="control">
+				<input class="input" type="text" value={ strconv.FormatUint(uint64(vmodel.Runner.ID), 10) } readonly/>
+			</div>
+		</div>
+		<div class="field">
+			<label class="label">Created At</label>
+			<div class="control">
+				<input class="input" type="text" value={ vmodel.Runner.CreatedAt.Format("2006-01-02 15:04:05") } readonly/>
+			</div>
+		</div>
+	}
+	<div class="field">
+		<div class="control">
+			<button class="button is-primary" type="submit">
+				<span class="icon">
+					<i class="fas fa-save"></i>
+				</span>
+				if vmodel.IsEdit {
+					<span>Update Runner</span>
+				} else {
+					<span>Create Runner</span>
+				}
+			</button>
+		</div>
+	</div>
+}
+
+templ runnerTokenCard(vmodel RunnerFormPageVModel) {
+	<div class="card mt-5">
+		<div class="card-header">
+			<p class="card-header-title">
+				<span class="icon">
+					<i class="fas fa-key"></i>
+				</span>
+				<span>Token Management</span>
+			</p>
+		</div>
+		<div class="card-content">
+			<div class="field">
+				<label class="label">Authentication Token</label>
+				<div class="field has-addons">
+					<div class="control is-expanded">
+						<input class="input" type="password" id="runner-token" value={ vmodel.Runner.Token } readonly/>
+					</div>
+					<div class="control">
+						<button class="button is-info" type="button" onclick={ toggleTokenVisibility() }>
+							<span class="icon">
+								<i class="fas fa-eye" id="toggle-icon"></i>
+							</span>
+						</button>
+					</div>
+					<div class="control">
+						<button class="button is-primary" type="button" onclick={ copyTokenToClipboard() }>
+							<span class="icon">
+								<i class="fas fa-copy"></i>
+							</span>
+							<span>Copy</span>
+						</button>
+					</div>
+				</div>
+				<p class="help">This token is used by the runner to authenticate with the server</p>
+			</div>
+			<div class="field">
+				<div class="control">
+					<button class="button is-warning" type="button" onclick={ regenerateToken(vmodel.Runner.ID) }>
+						<span class="icon">
+							<i class="fas fa-sync-alt"></i>
+						</span>
+						<span>Regenerate Token</span>
+					</button>
+				</div>
+				<p class="help has-text-warning">
+					<strong>Warning:</strong> Regenerating the token will invalidate the current token. 
+					You will need to update the runner configuration with the new token.
+				</p>
+			</div>
+		</div>
+	</div>
+}
+
+templ runnerDangerCard(vmodel RunnerFormPageVModel) {
+	if vmodel.Runner.Name != "Oplet Embedded Runner" {
+		<div class="card mt-5">
+			<div class="card-header">
+				<p class="card-header-title has-text-danger">
+					<span class="icon">
+						<i class="fas fa-exclamation-triangle"></i>
+					</span>
+					<span>Danger Zone</span>
+				</p>
+			</div>
+			<div class="card-content">
+				<div class="field">
+					<label class="label">Delete Runner</label>
+					<p class="help">
+						Once you delete a runner, there is no going back. This will permanently delete the runner 
+						and remove it from all associated tasks.
+					</p>
+				</div>
+				<div class="field">
+					<div class="control">
+						<button class="button is-danger" type="button" onclick={ deleteRunnerConfirm(vmodel.Runner.ID) }>
+							<span class="icon">
+								<i class="fas fa-trash"></i>
+							</span>
+							<span>Delete Runner</span>
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	}
+}
+
+templ runnerStatusCard(vmodel RunnerFormPageVModel) {
+	<div class="card">
+		<div class="card-header">
+			<p class="card-header-title">
+				<span class="icon">
+					<i class="fas fa-info-circle"></i>
+				</span>
+				<span>Status Summary</span>
+			</p>
+		</div>
+		<div class="card-content">
+			<div class="field">
+				<label class="label">Connection Status</label>
+				@RunnerStatusBadge(vmodel.Runner)
+			</div>
+			<div class="field">
+				<label class="label">Last Seen</label>
+				@RunnerLastSeen(vmodel.Runner)
+			</div>
+			if vmodel.Runner.ContactedAt != nil {
+				<div class="field">
+					<label class="label">Last Heartbeat</label>
+					<span class="is-size-7">{ vmodel.Runner.ContactedAt.Format("2006-01-02 15:04:05") }</span>
+				</div>
+			}
+		</div>
+	</div>
+}
+
+script validateRunnerName(runnerID uint) {
+	const nameInput = document.querySelector('input[name="name"]');
+	const helpText = document.getElementById('name-help');
+	const name = nameInput.value.trim();
+	
+	if (name === '') {
+		helpText.textContent = 'Runner name is required';
+		helpText.className = 'help has-text-danger';
+		return;
+	}
+	
+	const url = `/admin/runners/validate-name?name=${encodeURIComponent(name)}${runnerID ? `&runner_id=${runnerID}` : ''}`;
+	
+	fetch(url)
+		.then(response => response.json())
+		.then(data => {
+			if (data.available) {
+				helpText.textContent = 'Runner name is available';
+				helpText.className = 'help has-text-success';
+			} else {
+				helpText.textContent = 'This runner name is already taken';
+				helpText.className = 'help has-text-danger';
+			}
+		})
+		.catch(error => {
+			helpText.textContent = 'Error checking name availability';
+			helpText.className = 'help has-text-warning';
+		});
+}
+
+script toggleTokenVisibility() {
+	const tokenInput = document.getElementById('runner-token');
+	const toggleIcon = document.getElementById('toggle-icon');
+	
+	if (tokenInput.type === 'password') {
+		tokenInput.type = 'text';
+		toggleIcon.className = 'fas fa-eye-slash';
+	} else {
+		tokenInput.type = 'password';
+		toggleIcon.className = 'fas fa-eye';
+	}
+}
+
+script copyTokenToClipboard() {
+	const tokenInput = document.getElementById('runner-token');
+	tokenInput.select();
+	tokenInput.setSelectionRange(0, 99999);
+	
+	navigator.clipboard.writeText(tokenInput.value).then(() => {
+		const notification = document.createElement('div');
+		notification.className = 'notification is-success is-light';
+		notification.innerHTML = '<button class="delete"></button>Token copied to clipboard!';
+		document.body.appendChild(notification);
+		
+		setTimeout(() => {
+			notification.remove();
+		}, 3000);
+		
+		notification.querySelector('.delete').addEventListener('click', () => {
+			notification.remove();
+		});
+	}).catch(err => {
+		alert('Failed to copy token to clipboard');
+	});
+}
+
+script regenerateToken(runnerID uint) {
+	if (confirm('Are you sure you want to regenerate the token? The current token will be invalidated and you will need to update the runner configuration.')) {
+		fetch(`/admin/runners/${runnerID}/regenerate-token`, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			}
+		}).then(response => response.json())
+		.then(data => {
+			if (data.status === 'success') {
+				document.getElementById('runner-token').value = data.token;
+				
+				const notification = document.createElement('div');
+				notification.className = 'notification is-success is-light';
+				notification.innerHTML = '<button class="delete"></button>Token regenerated successfully! Don\'t forget to update your runner configuration.';
+				document.body.appendChild(notification);
+				
+				setTimeout(() => {
+					notification.remove();
+				}, 5000);
+				
+				notification.querySelector('.delete').addEventListener('click', () => {
+					notification.remove();
+				});
+			} else {
+				alert('Error regenerating token');
+			}
+		}).catch(error => {
+			alert('Error regenerating token');
+		});
+	}
+}
+
+script deleteRunnerConfirm(runnerID uint) {
+	if (confirm('Are you sure you want to delete this runner? This action cannot be undone.')) {
+		fetch(`/admin/runners/${runnerID}`, {
+			method: 'DELETE',
+			headers: {
+				'Content-Type': 'application/json',
+			}
+		}).then(response => {
+			if (response.ok) {
+				window.location.href = '/admin/runners';
+			} else {
+				alert('Error deleting runner');
+			}
+		}).catch(error => {
+			alert('Error deleting runner');
+		});
+	}
+}

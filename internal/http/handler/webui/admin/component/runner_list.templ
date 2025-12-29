@@ -1,0 +1,207 @@
+package component
+
+import (
+	common "github.com/bornholm/oplet/internal/http/handler/webui/common/component"
+	"github.com/bornholm/oplet/internal/store"
+	"strconv"
+	"time"
+)
+
+type RunnerListPageVModel struct {
+	Navbar       common.NavbarVModel
+	Runners      []*store.Runner
+	TotalRunners int64
+}
+
+templ RunnerListPage(vmodel RunnerListPageVModel) {
+	@common.Page(common.WithTitle("Runner management - Admin - Oplet")) {
+		<div class="container">
+			@common.Navbar(vmodel.Navbar)
+			<section class="section">
+				<div class="columns">
+					<!-- Aside Menu -->
+					<div class="column is-narrow">
+						<aside class="menu">
+							<p class="menu-label">
+								Administration
+							</p>
+							<ul class="menu-list">
+								<li><a href={ common.BaseURL(ctx, common.WithPath("/admin/")) }>Dashboard</a></li>
+								<li><a href={ common.BaseURL(ctx, common.WithPath("/admin/tasks")) }>Tasks</a></li>
+								<li><a href={ common.BaseURL(ctx, common.WithPath("/admin/users")) }>Users</a></li>
+								<li><a href={ common.BaseURL(ctx, common.WithPath("/admin/runners")) } class="is-active">Runners</a></li>
+							</ul>
+						</aside>
+					</div>
+					<!-- Main Content -->
+					<div class="column">
+						<div class="level">
+							<div class="level-left">
+								<div class="level-item">
+									<h1 class="title">Runners</h1>
+								</div>
+							</div>
+							<div class="level-right">
+								<div class="level-item">
+									<span class="tag is-large">{ strconv.FormatInt(vmodel.TotalRunners, 10) } runners</span>
+								</div>
+								<div class="level-item">
+									<a href={ common.BaseURL(ctx, common.WithPath("/admin/runners/new")) } class="button is-primary">
+										<span class="icon">
+											<i class="fas fa-plus"></i>
+										</span>
+										<span>New runner</span>
+									</a>
+								</div>
+							</div>
+						</div>
+						if len(vmodel.Runners) == 0 {
+							<div class="notification">
+								<p>No registered runners.</p>
+								<p>
+									<a href={ common.BaseURL(ctx, common.WithPath("/admin/runners/new")) } class="button is-primary is-small">
+										Create the first runner
+									</a>
+								</p>
+							</div>
+						} else {
+							<div class="table-container">
+								<table class="table is-fullwidth is-striped is-hoverable">
+									<thead>
+										<tr>
+											<th>ID</th>
+											<th>Name</th>
+											<th>Status</th>
+											<th>Last Seen</th>
+											<th>Created</th>
+											<th>Actions</th>
+										</tr>
+									</thead>
+									<tbody>
+										for _, runner := range vmodel.Runners {
+											<tr>
+												<td>
+													<code class="is-size-7">{ strconv.FormatUint(uint64(runner.ID), 10) }</code>
+												</td>
+												<td>
+													<strong>{ runner.Name }</strong>
+												</td>
+												<td>
+													@RunnerStatusBadge(runner)
+												</td>
+												<td>
+													@RunnerLastSeen(runner)
+												</td>
+												<td>
+													<span class="is-size-7">{ runner.CreatedAt.Format("2006-01-02 15:04") }</span>
+												</td>
+												<td>
+													<div class="buttons are-small">
+														<a href={ common.BaseURL(ctx, common.WithPath("/admin/runners/", strconv.FormatUint(uint64(runner.ID), 10), "/edit")) } class="button is-info">
+															<span class="icon">
+																<i class="fas fa-edit"></i>
+															</span>
+															<span>Edit</span>
+														</a>
+														<button class="button is-danger" onclick={ deleteRunner(runner.ID) }>
+															<span class="icon">
+																<i class="fas fa-trash"></i>
+															</span>
+															<span>Delete</span>
+														</button>
+													</div>
+												</td>
+											</tr>
+										}
+									</tbody>
+								</table>
+							</div>
+						}
+					</div>
+				</div>
+			</section>
+		</div>
+	}
+}
+
+templ RunnerStatusBadge(runner *store.Runner) {
+	if runner.ContactedAt != nil {
+		if time.Since(*runner.ContactedAt) <= time.Minute {
+			<span class="tag is-success">
+				<span class="icon">
+					<i class="fas fa-circle"></i>
+				</span>
+				<span>Online</span>
+			</span>
+		} else {
+			<span class="tag is-warning">
+				<span class="icon">
+					<i class="fas fa-circle"></i>
+				</span>
+				<span>Offline</span>
+			</span>
+		}
+	} else {
+		<span class="tag">
+			<span class="icon">
+				<i class="fas fa-question-circle"></i>
+			</span>
+			<span>Never connected</span>
+		</span>
+	}
+}
+
+templ RunnerLastSeen(runner *store.Runner) {
+	if runner.ContactedAt != nil {
+		<span class="is-size-7" title={ runner.ContactedAt.Format("2006-01-02 15:04:05") }>
+			{ formatTimeSince(*runner.ContactedAt) }
+		</span>
+	} else {
+		<span class="is-size-7 has-text-grey">Never</span>
+	}
+}
+
+script deleteRunner(runnerID uint) {
+	if (confirm('Are you sure you want to delete this runner? This action is irreversible.')) {
+		fetch('/admin/runners/' + runnerID, {
+			method: 'DELETE',
+			headers: {
+				'Content-Type': 'application/json',
+			}
+		}).then(response => {
+			if (response.ok) {
+				location.reload();
+			} else {
+				alert('Error deleting runner');
+			}
+		}).catch(error => {
+			alert('Error deleting runner');
+		});
+	}
+}
+
+func formatTimeSince(t time.Time) string {
+	duration := time.Since(t)
+
+	if duration < time.Minute {
+		return "Just now"
+	} else if duration < time.Hour {
+		minutes := int(duration.Minutes())
+		if minutes == 1 {
+			return "1 minute ago"
+		}
+		return strconv.Itoa(minutes) + " minutes ago"
+	} else if duration < 24*time.Hour {
+		hours := int(duration.Hours())
+		if hours == 1 {
+			return "1 hour ago"
+		}
+		return strconv.Itoa(hours) + " hours ago"
+	} else {
+		days := int(duration.Hours() / 24)
+		if days == 1 {
+			return "1 day ago"
+		}
+		return strconv.Itoa(days) + " days ago"
+	}
+}
