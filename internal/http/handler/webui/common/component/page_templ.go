@@ -179,25 +179,38 @@ func Page(funcs ...PageOptionFunc) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		if opts.IncludeFooter {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<footer class=\"footer\"><div class=\"content has-text-centered\"><p><b>Oplet</b> (version <a href=\"https://github.com/bornholm/oplet\" target=\"_blank\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<footer class=\"footer\"><div class=\"content has-text-centered\"><p><b>Oplet</b> ( <a href=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var8 string
-			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(build.ShortVersion)
+			var templ_7745c5c3_Var8 templ.SafeURL
+			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL("https://github.com/Bornholm/oplet/releases/" + build.Version))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/http/handler/webui/common/component/page.templ`, Line: 75, Col: 110}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/http/handler/webui/common/component/page.templ`, Line: 75, Col: 109}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</a>)</p></div></footer>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "\" target=\"_blank\"><span class=\"is-family-code\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var9 string
+			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(build.Version)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/http/handler/webui/common/component/page.templ`, Line: 75, Col: 172}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</span></a> )</p></div></footer>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</div><script type=\"text/javascript\">\n\t\t\t\thtmx.config.responseHandling = [\n\t\t\t\t\t{code:\"204\", swap: false},   // 204 - No Content by default does nothing, but is not an error\n\t\t\t\t\t{code:\"[23]..\", swap: true}, // 200 & 300 responses are non-errors and are swapped\n\t\t\t\t\t{code:\"[45]..\", swap: true, error:true}, // 400 & 500 responses are not swapped and are errors\n\t\t\t\t];\n\t\t\t</script></body></html>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</div><script type=\"text/javascript\">\n\t\t\t\thtmx.config.responseHandling = [\n\t\t\t\t\t{code:\"204\", swap: false},   // 204 - No Content by default does nothing, but is not an error\n\t\t\t\t\t{code:\"[23]..\", swap: true}, // 200 & 300 responses are non-errors and are swapped\n\t\t\t\t\t{code:\"[45]..\", swap: true, error:true}, // 400 & 500 responses are not swapped and are errors\n\t\t\t\t];\n\t\t\t</script></body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -1,4 +1,3 @@
 package build
 
-var ShortVersion = "unknown"
-var LongVersion = "unknown"
+var Version = "latest"
