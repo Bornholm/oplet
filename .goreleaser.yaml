@@ -5,11 +5,20 @@ before:
     - go mod tidy
 
 builds:
-  - id: oplet
+  - id: oplet-server
     targets: [linux_amd64]
     mod_timestamp: "{{ .CommitTimestamp }}"
     dir: ./cmd/server
-    binary: oplet
+    binary: oplet-server
+    flags:
+      - -trimpath
+    ldflags:
+      - -w -s -X 'github.com/bornholm/oplet/internal/build.Version={{ .Version }}'
+  - id: oplet-runner
+    targets: [linux_amd64]
+    mod_timestamp: "{{ .CommitTimestamp }}"
+    dir: ./cmd/runner
+    binary: oplet-runner
     flags:
       - -trimpath
     ldflags:
@@ -29,16 +38,29 @@ release:
   name_template: "v{{ .Version }}"
 
 dockers_v2:
-  - id: oplet
+  - id: oplet-server
     sbom: false
     platforms:
       - linux/amd64
     ids:
-      - oplet
-    dockerfile: misc/docker/Dockerfile
+      - oplet-server
+    dockerfile: misc/docker/Dockerfile.server
     images:
-      - "ghcr.io/{{ tolower ( .Env.REPO_OWNER ) }}/oplet"
-      - "ghcr.io/{{ tolower ( .Env.REPO_OWNER ) }}/oplet"
+      - "ghcr.io/{{ tolower ( .Env.REPO_OWNER ) }}/oplet-server"
+      - "ghcr.io/{{ tolower ( .Env.REPO_OWNER ) }}/oplet-server"
+    tags:
+      - "{{ .Version }}"
+      - latest
+  - id: oplet-runner
+    sbom: false
+    platforms:
+      - linux/amd64
+    ids:
+      - oplet-runner
+    dockerfile: misc/docker/Dockerfile.runner
+    images:
+      - "ghcr.io/{{ tolower ( .Env.REPO_OWNER ) }}/oplet-runner"
+      - "ghcr.io/{{ tolower ( .Env.REPO_OWNER ) }}/oplet-runner"
     tags:
       - "{{ .Version }}"
       - latest

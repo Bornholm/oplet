@@ -8,6 +8,6 @@ RUN apk add \
     gcompat \
   && update-ca-certificates
 
-COPY $TARGETPLATFORM/oplet /usr/local/bin/oplet
+COPY $TARGETPLATFORM/oplet-server /usr/local/bin/oplet-server
 
-CMD ["/usr/local/bin/oplet"]
+CMD ["/usr/local/bin/oplet-server"]
