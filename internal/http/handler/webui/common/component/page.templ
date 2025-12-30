@@ -72,7 +72,9 @@ templ Page(funcs ...PageOptionFunc) {
 					<footer class="footer">
 						<div class="content has-text-centered">
 							<p>
-								<b>Oplet</b> ( <a href={ templ.SafeURL("https://github.com/Bornholm/oplet/releases/v" + build.Version) } target="_blank"><span class="is-family-code">{ build.Version }</span></a> )
+								<a href={ templ.SafeURL("https://github.com/Bornholm/oplet/releases/v" + build.Version) } target="_blank">Version { build.Version }</a>
+								| 
+								<a href={ templ.SafeURL("https://github.com/Bornholm/oplet/tree/v" + build.Version + "/doc") } target="_blank">Documentation</a>
 							</p>
 						</div>
 					</footer>
