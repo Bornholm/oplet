@@ -17,12 +17,12 @@ With the following `.env` file:
 OPLET_HTTP_BASE_URL=http://<public_host>:3002
 OPLET_HTTP_SESSION_KEYS=<32_bytes_session_signing_key>
 
-# OpenID Identity Provider configuration
+# OpenID Identity Provider configuration (ex: Google)
 OPLET_HTTP_AUTHN_PROVIDERS_GOOGLE_KEY=<google_openid_key>
 OPLET_HTTP_AUTHN_PROVIDERS_GOOGLE_SECRET=<google_openid_secret>
 
-# User/roles mappings
-OPLET_HTTP_AUTHN_ROLE_MAPPINGS=<email_user_1>:admin,<email_user_2>:user
+# Default administrator email
+OPLET_HTTP_AUTHN_DEFAULT_ADMIN_EMAIL=<your_email>
 ```
 
 ## Documentation
