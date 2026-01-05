@@ -25,6 +25,12 @@ type ExecutionRequest struct {
 	OnChange func(Execution)
 }
 
+type LogEntry struct {
+	Clock     uint
+	Timestamp time.Time
+	Message   string
+}
+
 type ExecutionState int
 
 const (
@@ -58,13 +64,17 @@ type Execution struct {
 	Outputs     *tar.Reader
 }
 
+var (
+	ErrContainerNotFound = errors.New("container not found")
+)
+
 // Executor defines the interface for container execution
 type Executor interface {
 	// Execute runs a container and returns the execution result
 	Execute(ctx context.Context, req ExecutionRequest) error
 
 	// GetLogs streams logs from a running container
-	GetLogs(ctx context.Context, containerID string) (io.ReadCloser, error)
+	GetLogs(ctx context.Context, containerID string) (chan LogEntry, error)
 }
 
 // ContainerInfo provides information about a container
@@ -112,23 +122,13 @@ func (e *ExecutionError) Unwrap() error {
 type ExecutionErrorType string
 
 const (
-	ErrorTypeImagePullFailed       ExecutionErrorType = "image_pull_failed"
-	ErrorTypeContainerFailed       ExecutionErrorType = "container_failed"
-	ErrorTypeTimeout               ExecutionErrorType = "timeout"
-	ErrorTypeInsufficientResources ExecutionErrorType = "insufficient_resources"
-	ErrorTypeFileUploadFailed      ExecutionErrorType = "file_upload_failed"
-	ErrorTypeFileDownloadFailed    ExecutionErrorType = "file_download_failed"
-	ErrorTypeNetworkError          ExecutionErrorType = "network_error"
-	ErrorTypeDockerDaemonError     ExecutionErrorType = "docker_daemon_error"
+	ErrorTypeImagePullFailed    ExecutionErrorType = "image_pull_failed"
+	ErrorTypeFileUploadFailed   ExecutionErrorType = "file_upload_failed"
+	ErrorTypeFileDownloadFailed ExecutionErrorType = "file_download_failed"
+	ErrorTypeDockerDaemonError  ExecutionErrorType = "docker_daemon_error"
 )
 
 // Predefined errors
 var (
-	ErrContainerFailed         = errors.New("container execution failed")
-	ErrTimeout                 = errors.New("execution timeout")
-	ErrImageNotFound           = errors.New("image not found")
-	ErrInsufficientResources   = errors.New("insufficient resources")
-	ErrFileUploadFailed        = errors.New("file upload failed")
-	ErrFileDownloadFailed      = errors.New("file download failed")
-	ErrDockerDaemonUnavailable = errors.New("docker daemon unavailable")
+	ErrImageNotFound = errors.New("image not found")
 )

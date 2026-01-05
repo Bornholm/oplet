@@ -1,0 +1,11 @@
+# Place this file in $HOME/.config/systemd/user/oplet-runner.service
+[Unit]
+Description=Oplet basic runner
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/oplet-runner
+Restart=on-failure
+
+[Install]
+WantedBy=default.target

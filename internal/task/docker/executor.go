@@ -2,6 +2,7 @@ package docker
 
 import (
 	"archive/tar"
+	"bufio"
 	"context"
 	"crypto/sha256"
 	"fmt"
@@ -15,6 +16,7 @@ import (
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/client"
+	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/pkg/errors"
 	"github.com/rs/xid"
 
@@ -430,7 +432,9 @@ func (e *DockerExecutor) downloadFiles(ctx context.Context, containerID string, 
 }
 
 // GetLogs implements task.Executor.GetLogs
-func (e *DockerExecutor) GetLogs(ctx context.Context, containerID string) (io.ReadCloser, error) {
+func (e *DockerExecutor) GetLogs(ctx context.Context, containerID string) (chan task.LogEntry, error) {
+	var clock uint = 0
+
 	options := container.LogsOptions{
 		ShowStdout: true,
 		ShowStderr: true,
@@ -438,8 +442,12 @@ func (e *DockerExecutor) GetLogs(ctx context.Context, containerID string) (io.Re
 		Follow:     true,
 	}
 
-	reader, err := e.client.ContainerLogs(ctx, containerID, options)
+	logReader, err := e.client.ContainerLogs(ctx, containerID, options)
 	if err != nil {
+		if strings.Contains(err.Error(), "No such container") {
+			err = task.ErrContainerNotFound
+		}
+
 		return nil, &task.ExecutionError{
 			Type:        task.ErrorTypeDockerDaemonError,
 			Message:     "failed to get container logs",
@@ -448,7 +456,63 @@ func (e *DockerExecutor) GetLogs(ctx context.Context, containerID string) (io.Re
 		}
 	}
 
-	return reader, nil
+	logs := make(chan task.LogEntry)
+
+	r, w := io.Pipe()
+	lineScanner := bufio.NewScanner(r)
+
+	go func() {
+		defer func() {
+			if err := logReader.Close(); err != nil {
+				e.logger.ErrorContext(ctx, "could not close log reader", slogx.Error(errors.WithStack(err)))
+			}
+
+			if err := w.Close(); err != nil {
+				e.logger.ErrorContext(ctx, "could not close log writer", slogx.Error(errors.WithStack(err)))
+			}
+		}()
+
+		if _, err := stdcopy.StdCopy(w, w, logReader); err != nil {
+			e.logger.ErrorContext(ctx, "could not close log reader", slogx.Error(errors.WithStack(err)))
+		}
+	}()
+
+	go func() {
+		defer close(logs)
+
+		for lineScanner.Scan() {
+			message := lineScanner.Text()
+			line := message
+			timestamp := time.Now()
+
+			if strings.Contains(message, "T") && strings.Contains(message, "Z") {
+				parts := strings.SplitN(message, " ", 2)
+				if len(parts) == 2 {
+					line = parts[1]
+					ts, err := time.Parse(time.RFC3339, parts[0])
+					if err != nil {
+						e.logger.ErrorContext(ctx, "could not parse log entry timestamp", slog.String("logMessage", message), slogx.Error(errors.WithStack(err)))
+					} else {
+						timestamp = ts
+					}
+				}
+			}
+
+			logs <- task.LogEntry{
+				Timestamp: timestamp,
+				Message:   line,
+				Clock:     clock,
+			}
+
+			clock++
+		}
+
+		if err := lineScanner.Err(); err != nil {
+			e.logger.ErrorContext(ctx, "could not scan for next log line", slogx.Error(errors.WithStack(err)))
+		}
+	}()
+
+	return logs, nil
 }
 
 // remove implements task.Executor.Remove

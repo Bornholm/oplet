@@ -51,19 +51,9 @@ func (h *Handler) getExecutionLogs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get logs since last request (for incremental updates)
-	since := getTimestampFromQuery(r, "since")
-
 	executionRepo := execution.NewRepository(h.store)
-	var logs []*store.TaskExecutionLog
-	var err error
 
-	if since.IsZero() {
-		logs, err = executionRepo.GetLogs(r.Context(), executionID, 100, 0)
-	} else {
-		logs, err = executionRepo.GetLogsSince(r.Context(), executionID, since)
-	}
-
+	logs, err := executionRepo.GetLogs(r.Context(), executionID, -1, 0)
 	if err != nil {
 		common.HandleError(w, r, errors.WithStack(err))
 		return
@@ -217,7 +207,7 @@ func (h *Handler) fillExecutionPageViewModel(r *http.Request, executionID uint) 
 	}
 
 	// Get recent logs
-	logs, err := executionRepo.GetLogs(ctx, executionID, 100, 0)
+	logs, err := executionRepo.GetLogs(ctx, executionID, -1, 0)
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}

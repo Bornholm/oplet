@@ -26,7 +26,7 @@ templ ExecutionPage(vmodel ExecutionPageVModel) {
 				@ExecutionHeader(vmodel.Task, vmodel.Execution)
 				<div class="columns">
 					<div class="column is-8">
-						@LogViewer(vmodel.Task.ID, vmodel.Execution.ID, vmodel.Logs, vmodel.IsRunning)
+						@LogViewer(vmodel.Task, vmodel.Execution.ID, vmodel.Logs, vmodel.IsRunning)
 					</div>
 					<div class="column is-4">
 						@ExecutionSidebar(vmodel.Execution, vmodel.OutputFiles)
@@ -73,7 +73,7 @@ templ ExecutionHeader(task *store.Task, execution *store.TaskExecution) {
 	</div>
 }
 
-templ LogViewer(taskID uint, executionID uint, logs []*store.TaskExecutionLog, isRunning bool) {
+templ LogViewer(task *store.Task, executionID uint, logs []*store.TaskExecutionLog, isRunning bool) {
 	<div class="card">
 		<div class="card-header">
 			<p class="card-header-title">
@@ -92,32 +92,33 @@ templ LogViewer(taskID uint, executionID uint, logs []*store.TaskExecutionLog, i
 			</p>
 		</div>
 		<div class="card-content px-5 pt-0" style="overflow-x:auto">
-			<pre>
-				<code
-					class="is-fullwidth is-family-code"
-					if isRunning {
-						hx-get={ common.BaseURL(ctx, common.WithPathf("/tasks/%d/executions/%d/logs", taskID, executionID)) }
-						hx-trigger="every 2s"
-						hx-swap="innerHTML"
-						hx-indicator="#log-loading"
-					}
-				>
-					@LogEntries(logs, false)
-				</code>
+			<pre
+				style="max-height:500px"
+				if isRunning {
+					hx-get={ common.BaseURL(ctx, common.WithPathf("/tasks/%d/executions/%d/logs", task.ID, executionID)) }
+					hx-trigger="every 2s"
+					hx-swap="innerHTML scroll:bottom"
+				}
+			>
+				@LogEntries(logs, false)
 			</pre>
 		</div>
 	</div>
 }
 
 templ LogEntries(logs []*store.TaskExecutionLog, shouldRefresh bool) {
-	for _, log := range logs {
-		<span class={ templ.KV("has-text-grey", log.Source != "container") }>
-			<span>[{ time.UnixMicro(log.Timestamp).Format("15:04:05") }]</span>
-			<span>[{ log.Source }]</span>
-			<span class={ templ.KV("is-italic", log.Source != "container") }>{ log.Message }</span>
-		</span>
-		<br/>
-	}
+	<code
+		class="is-fullwidth is-family-code"
+	>
+		for _, log := range logs {
+			<span class={ templ.KV("has-text-grey", log.Source != "container") }>
+				<span>[{ time.UnixMicro(log.Timestamp).Format("15:04:05") }]</span>
+				<span>[{ log.Source }]</span>
+				<span class={ templ.KV("is-italic", log.Source != "container") }>{ log.Message }</span>
+			</span>
+			<br/>
+		}
+	</code>
 	if shouldRefresh {
 		<script>
 			window.location.reload()

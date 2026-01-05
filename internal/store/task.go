@@ -70,9 +70,10 @@ const (
 type TaskExecutionLog struct {
 	gorm.Model
 	Execution   *TaskExecution
-	ExecutionID uint   `gorm:"index"`
-	Timestamp   int64  `gorm:"index"`
-	Source      string // "container", "system"
+	ExecutionID uint   `gorm:"index:task_execution_log,unique"`
+	Timestamp   int64  `gorm:"index:task_execution_log,unique"`
+	Source      string `gorm:"index:task_execution_log,unique"` // "container", "system"
+	Clock       uint   `gorm:"index:task_execution_log,unique"`
 	Message     string
 }
 

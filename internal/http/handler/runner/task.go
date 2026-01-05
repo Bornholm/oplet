@@ -189,26 +189,26 @@ func (h *Handler) handleTaskTrace(w http.ResponseWriter, r *http.Request) {
 	exec := executions[0]
 
 	// Add logs to execution
-	logsAdded := 0
+	dbLogs := make([]*store.TaskExecutionLog, 0)
+
 	for _, logEntry := range req.Logs {
-		dbLog := &store.TaskExecutionLog{
+		dbLogs = append(dbLogs, &store.TaskExecutionLog{
 			ExecutionID: exec.ID,
 			Timestamp:   logEntry.Timestamp,
 			Source:      logEntry.Source,
 			Message:     logEntry.Message,
-		}
+			Clock:       logEntry.Clock,
+		})
+	}
 
-		if err := executionRepo.AddLog(ctx, exec.ID, dbLog); err != nil {
-			h.logger.WarnContext(ctx, "could not add log entry",
-				"execution_id", exec.ID, "error", err)
-			continue
-		}
-		logsAdded++
+	if err := executionRepo.AddLog(ctx, exec.ID, dbLogs...); err != nil {
+		h.logger.WarnContext(ctx, "could not add log entries",
+			"execution_id", exec.ID, "error", err)
 	}
 
 	response := TaskTraceResponse{
 		ExecutionID: exec.ID,
-		LogsAdded:   logsAdded,
+		LogsAdded:   len(dbLogs),
 	}
 
 	writeJSONResponse(w, http.StatusOK, response)
@@ -216,7 +216,7 @@ func (h *Handler) handleTaskTrace(w http.ResponseWriter, r *http.Request) {
 	h.logger.DebugContext(ctx, "logs added to execution",
 		"runner_id", runner.ID,
 		"execution_id", exec.ID,
-		"logs_added", logsAdded)
+		"logs_added", len(dbLogs))
 }
 
 func (h *Handler) handleTaskInputs(w http.ResponseWriter, r *http.Request) {
@@ -405,34 +405,6 @@ func (h *Handler) handleTaskOutputs(w http.ResponseWriter, r *http.Request) {
 		"runner_id", runner.ID,
 		"execution_id", exec.ID,
 		"files_stored", filesStored)
-}
-
-// Helper methods for file storage
-func (h *Handler) storeInputFile(ctx context.Context, executionID uint, fieldName string, fileHeader *multipart.FileHeader) error {
-	file, err := fileHeader.Open()
-	if err != nil {
-		return errors.Wrapf(err, "could not open uploaded file %s", fileHeader.Filename)
-	}
-	defer file.Close()
-
-	filename := filepath.Base(fileHeader.Filename)
-	storedFile, err := h.fileStorage.StoreInputFile(executionID, filename, file)
-	if err != nil {
-		return errors.Wrapf(err, "could not store input file %s", filename)
-	}
-
-	// Record in database
-	executionRepo := execution.NewRepository(h.store)
-	dbFile := &store.TaskExecutionFile{
-		ExecutionID: executionID,
-		Filename:    storedFile.OriginalName,
-		FilePath:    storedFile.StoredPath,
-		FileSize:    storedFile.Size,
-		MimeType:    storedFile.MimeType,
-		IsOutput:    false,
-	}
-
-	return executionRepo.AddFile(ctx, executionID, dbFile)
 }
 
 func (h *Handler) storeOutputFile(ctx context.Context, executionID uint, fieldName string, fileHeader *multipart.FileHeader) error {

@@ -35,6 +35,7 @@ type TaskStatusRequest struct {
 	Error       string                    `json:"error,omitempty"`
 	StartedAt   *time.Time                `json:"started_at,omitempty"`
 	FinishedAt  *time.Time                `json:"finished_at,omitempty"`
+	Timestamp   int64                     `json:"timestamp" validate:"required"`
 }
 
 type TaskStatusResponse struct {
@@ -48,6 +49,7 @@ type LogEntry struct {
 	Timestamp int64  `json:"timestamp" validate:"required"`
 	Source    string `json:"source" validate:"required,oneof=container system"`
 	Message   string `json:"message" validate:"required"`
+	Clock     uint   `json:"clock" validate:"required"`
 }
 
 type TaskTraceRequest struct {

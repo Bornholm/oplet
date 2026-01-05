@@ -8,6 +8,7 @@ import (
 	"github.com/bornholm/oplet/internal/store"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // CRUD Operations
@@ -229,10 +230,15 @@ func (r *Repository) ListForUser(ctx context.Context, userID uint, limit, offset
 
 // Log Operations
 
-func (r *Repository) AddLog(ctx context.Context, executionID uint, log *store.TaskExecutionLog) error {
-	log.ExecutionID = executionID
+func (r *Repository) AddLog(ctx context.Context, executionID uint, logs ...*store.TaskExecutionLog) error {
+	for _, l := range logs {
+		l.ExecutionID = executionID
+	}
+
 	return r.store.WithDatabase(ctx, func(ctx context.Context, db *gorm.DB) error {
-		if err := db.Create(log).Error; err != nil {
+		if err := db.Clauses(clause.OnConflict{
+			DoNothing: true,
+		}).Create(logs).Error; err != nil {
 			return errors.WithStack(err)
 		}
 		return nil
@@ -250,20 +256,6 @@ func (r *Repository) GetLogs(ctx context.Context, executionID uint, limit, offse
 			query = query.Offset(offset)
 		}
 		if err := query.Find(&logs).Error; err != nil {
-			return errors.WithStack(err)
-		}
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	return logs, nil
-}
-
-func (r *Repository) GetLogsSince(ctx context.Context, executionID uint, since time.Time) ([]*store.TaskExecutionLog, error) {
-	var logs []*store.TaskExecutionLog
-	err := r.store.WithDatabase(ctx, func(ctx context.Context, db *gorm.DB) error {
-		if err := db.Where("execution_id = ? AND timestamp > ?", executionID, since).Order("timestamp ASC").Find(&logs).Error; err != nil {
 			return errors.WithStack(err)
 		}
 		return nil

@@ -184,9 +184,10 @@ func (h *Handler) handleTaskStatus(w http.ResponseWriter, r *http.Request) {
 	// Add system log entry for status change
 	logEntry := &store.TaskExecutionLog{
 		ExecutionID: exec.ID,
-		Timestamp:   time.Now().UnixMicro(),
+		Timestamp:   req.Timestamp,
 		Source:      "system",
 		Message:     fmt.Sprintf("Status changed to: %s", req.Status),
+		Clock:       uint(req.Timestamp),
 	}
 
 	if err := executionRepo.AddLog(ctx, exec.ID, logEntry); err != nil {

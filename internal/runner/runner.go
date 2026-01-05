@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/url"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/bornholm/oplet/internal/slogx"
@@ -240,6 +239,7 @@ func (r *Runner) createExecutionCallback(ctx context.Context, taskResp *TaskRequ
 		statusReq := TaskStatusRequest{
 			Status:      status,
 			ContainerID: e.ContainerID,
+			Timestamp:   time.Now().UnixMicro(),
 		}
 
 		if !e.StartedAt.IsZero() {
@@ -293,79 +293,78 @@ func (r *Runner) startLogStreaming(ctx context.Context, taskResp *TaskRequestRes
 			}
 		}()
 
-		// Get container logs
-		logReader, err := r.executor.GetLogs(ctx, containerID)
-		if err != nil {
-			r.logger.ErrorContext(ctx, "failed to get container logs",
-				"execution_id", taskResp.ExecutionID,
-				"container_id", containerID,
-				"error", err)
-			return
+		var localClock uint = 0
+
+		logs := make([]LogEntry, 0)
+		submitLogs := func() {
+			if len(logs) == 0 {
+				return
+			}
+
+			if submitErr := r.client.SubmitLogs(ctx, taskResp.TaskID, logs); submitErr != nil {
+				r.logger.WarnContext(ctx, "failed to submit logs",
+					"execution_id", taskResp.ExecutionID,
+					"error", submitErr)
+			}
+
+			logs = make([]LogEntry, 0)
 		}
-		defer logReader.Close()
 
-		// Stream logs to server
-		if err := r.streamLogs(ctx, taskResp, logReader); err != nil {
-			r.logger.ErrorContext(ctx, "failed to stream logs",
-				"execution_id", taskResp.ExecutionID,
-				"error", err)
-		}
-	}()
-}
+		defer submitLogs()
 
-func (r *Runner) streamLogs(ctx context.Context, taskResp *TaskRequestResponse, logReader io.ReadCloser) error {
-	// Read logs and batch them for submission
-	buffer := make([]byte, 4096)
-	var logs []LogEntry
+		ticker := time.NewTicker(time.Second)
+		defer ticker.Stop()
 
-	for {
-		n, err := logReader.Read(buffer)
-		if n > 0 {
-			// Parse log lines
-			logText := string(buffer[:n])
-			lines := strings.Split(logText, "\n")
+		defer func() {
+			r.logger.InfoContext(ctx, "stopped streaming logs")
+		}()
 
-			for _, line := range lines {
-				if strings.TrimSpace(line) == "" {
-					continue
+		for {
+			logs = make([]LogEntry, 0)
+
+			// Get container logs
+			logEntries, err := r.executor.GetLogs(ctx, containerID)
+			if err != nil {
+				r.logger.ErrorContext(ctx, "failed to get container logs",
+					"execution_id", taskResp.ExecutionID,
+					"container_id", containerID,
+					"error", errors.Cause(err))
+
+				if errors.Is(err, task.ErrContainerNotFound) {
+					return
 				}
 
-				logs = append(logs, LogEntry{
-					Timestamp: time.Now().UnixMicro(),
-					Source:    "container",
-					Message:   line,
-				})
+				continue
+			}
 
-				// Submit logs in batches of 10
-				if len(logs) >= 10 {
-					if submitErr := r.client.SubmitLogs(ctx, taskResp.TaskID, logs); submitErr != nil {
-						r.logger.WarnContext(ctx, "failed to submit logs",
-							"execution_id", taskResp.ExecutionID,
-							"error", submitErr)
+			for {
+				select {
+				case <-ctx.Done():
+					return
+
+				case e, ok := <-logEntries:
+					if !ok {
+						submitLogs()
+						break
 					}
-					logs = logs[:0] // Clear the slice
+
+					if e.Clock >= localClock {
+						logs = append(logs, LogEntry{
+							Timestamp: e.Timestamp.UnixMicro(),
+							Source:    "container",
+							Message:   e.Message,
+							Clock:     e.Clock,
+						})
+						localClock = e.Clock
+					}
+
+				case <-ticker.C:
+					submitLogs()
 				}
 			}
 		}
 
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return errors.Wrap(err, "failed to read logs")
-		}
-	}
-
-	// Submit remaining logs
-	if len(logs) > 0 {
-		if err := r.client.SubmitLogs(ctx, taskResp.TaskID, logs); err != nil {
-			r.logger.WarnContext(ctx, "failed to submit final logs",
-				"execution_id", taskResp.ExecutionID,
-				"error", err)
-		}
-	}
-
-	return nil
+	}()
 }
 
 func (r *Runner) mapExecutionStateToStatus(state task.ExecutionState) store.TaskExecutionStatus {

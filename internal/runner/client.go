@@ -37,6 +37,7 @@ type TaskStatusRequest struct {
 	Error       string                    `json:"error,omitempty"`
 	StartedAt   *time.Time                `json:"started_at,omitempty"`
 	FinishedAt  *time.Time                `json:"finished_at,omitempty"`
+	Timestamp   int64                     `json:"timestamp"`
 }
 
 // LogEntry represents a log entry
@@ -44,6 +45,7 @@ type LogEntry struct {
 	Timestamp int64  `json:"timestamp"`
 	Source    string `json:"source"`
 	Message   string `json:"message"`
+	Clock     uint   `json:"clock"`
 }
 
 // TaskTraceRequest represents a log submission request

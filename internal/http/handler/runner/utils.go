@@ -32,13 +32,6 @@ func writeErrorResponseWithCode(w http.ResponseWriter, statusCode int, message, 
 	})
 }
 
-func writeSuccessResponse(w http.ResponseWriter, message string, data interface{}) {
-	writeJSONResponse(w, http.StatusOK, SuccessResponse{
-		Message: message,
-		Data:    data,
-	})
-}
-
 // Error handling utilities
 func handleInternalError(h *Handler, w http.ResponseWriter, r *http.Request, err error, message string) {
 	ctx := r.Context()
@@ -52,10 +45,6 @@ func handleValidationError(w http.ResponseWriter, err error) {
 
 func handleNotFoundError(w http.ResponseWriter, resource string) {
 	writeErrorResponseWithCode(w, http.StatusNotFound, resource+" not found", "not_found")
-}
-
-func handleUnauthorizedError(w http.ResponseWriter, message string) {
-	writeErrorResponseWithCode(w, http.StatusUnauthorized, message, "unauthorized")
 }
 
 // Request parsing utilities
@@ -81,16 +70,4 @@ func getTaskIDFromPath(r *http.Request) (string, error) {
 		return "", ErrInvalidRequest("taskID is required")
 	}
 	return taskID, nil
-}
-
-// Validation utilities
-type Validator interface {
-	Validate() error
-}
-
-func validateRequest(req Validator) error {
-	if req == nil {
-		return ErrInvalidRequest("request body is required")
-	}
-	return req.Validate()
 }
