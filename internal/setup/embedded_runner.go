@@ -26,7 +26,7 @@ func StartEmbeddedRunner(ctx context.Context, conf *config.Config) error {
 		return errors.Wrap(err, "could not retrieve embedded runner")
 	}
 
-	runner, err := runner.New(conf.HTTP.BaseURL, embeddedRunner.Token)
+	runner, err := runner.New(conf.Runner.ServerURL, embeddedRunner.Token)
 	if err != nil {
 		slog.ErrorContext(ctx, "could not create runner", slogx.Error(errors.WithStack(err)))
 		os.Exit(1)
