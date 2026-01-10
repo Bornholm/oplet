@@ -3,13 +3,14 @@ package docker
 import (
 	"archive/tar"
 	"bufio"
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"fmt"
 	"io"
 	"log/slog"
+	"os"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/docker/docker/api/types/container"
@@ -22,6 +23,8 @@ import (
 
 	"github.com/bornholm/oplet/internal/slogx"
 	"github.com/bornholm/oplet/internal/task"
+	"github.com/shirou/gopsutil/v4/cpu"
+	"github.com/shirou/gopsutil/v4/mem"
 )
 
 // DockerExecutor implements task.Executor using Docker client
@@ -321,6 +324,26 @@ func (e *DockerExecutor) createContainer(ctx context.Context, runID string, req 
 		},
 	}
 
+	if req.Constraints.CPUs == 0 {
+		totalCpus, err := cpu.Counts(true)
+		if err != nil {
+			return "", errors.Wrap(err, "failed to retrieve host cpus stats")
+		}
+
+		req.Constraints.CPUs = float64(totalCpus / 2)
+	}
+
+	if req.Constraints.MaxMemory == 0 {
+		memory, err := mem.VirtualMemory()
+		if err != nil {
+			return "", errors.Wrap(err, "failed to retrieve host memory stats")
+		}
+
+		req.Constraints.MaxMemory = int64(0.5 * float64(memory.Total))
+	}
+
+	e.logger.Debug("applying constraints", "max_memory", req.Constraints.MaxMemory, "cpus", req.Constraints.CPUs)
+
 	// Build host configuration
 	hostConfig := &container.HostConfig{
 		NetworkMode:    container.NetworkMode("bridge"),
@@ -328,6 +351,10 @@ func (e *DockerExecutor) createContainer(ctx context.Context, runID string, req 
 		AutoRemove:     false,
 		Mounts:         containerMounts,
 		Binds:          cacheBinds,
+		Resources: container.Resources{
+			NanoCPUs: int64(req.Constraints.CPUs * 1000000000.0),
+			Memory:   req.Constraints.MaxMemory,
+		},
 	}
 
 	// Create container
@@ -347,64 +374,65 @@ func (e *DockerExecutor) uploadFiles(ctx context.Context, containerID string, in
 		return nil
 	}
 
-	e.logger.Debug("uploading files to container", "container_id", containerID, "file_count", len(files))
-
-	// Create TAR archive
 	pr, pw := io.Pipe()
 
-	var pipeErr error
-	var wg sync.WaitGroup
+	errChan := make(chan error, 1)
 
-	wg.Add(1)
 	go func() {
-		defer wg.Done()
+		defer pw.Close()
 
 		tw := tar.NewWriter(pw)
-		defer pw.Close() // Fermera le reader aussi avec EOF
 		defer tw.Close()
 
 		for filename, file := range files {
-			// Read file content
-			content, err := io.ReadAll(file)
-			if err != nil {
-				pipeErr = errors.Wrapf(err, "failed to read file %s", filename)
-				return
+			var size int64
+			if f, ok := file.(interface{ Stat() (os.FileInfo, error) }); ok {
+				info, err := f.Stat()
+				if err != nil {
+					errChan <- errors.Wrapf(err, "failed to stat file %s", filename)
+					return
+				}
+				size = info.Size()
+			} else {
+				content, err := io.ReadAll(file)
+				if err != nil {
+					errChan <- err
+					return
+				}
+				size = int64(len(content))
+				file = io.NopCloser(bytes.NewReader(content))
 			}
 
-			// Create TAR header
 			header := &tar.Header{
 				Name: filename,
 				Mode: 0644,
-				Size: int64(len(content)),
+				Size: size,
 			}
 
-			// Write header and content
 			if err := tw.WriteHeader(header); err != nil {
-				pipeErr = errors.Wrapf(err, "failed to write TAR header for %s", filename)
+				errChan <- errors.Wrapf(err, "failed to write TAR header for %s", filename)
 				return
 			}
-			if _, err := tw.Write(content); err != nil {
-				pipeErr = errors.Wrapf(err, "failed to write TAR content for %s", filename)
+
+			if _, err := io.Copy(tw, file); err != nil {
+				errChan <- errors.Wrapf(err, "failed to write TAR content for %s", filename)
 				return
 			}
 		}
 
-		if err := tw.Close(); err != nil {
-			pipeErr = errors.Wrap(err, "failed to close TAR writer")
-			return
-		}
+		errChan <- nil
 	}()
 
-	// Upload TAR archive to container
-	err := e.client.CopyToContainer(ctx, containerID, inputsDir, pr, container.CopyToContainerOptions{})
-	if err != nil {
-		return errors.Wrapf(err, "failed to copy files to container %s", containerID)
+	uploadErr := e.client.CopyToContainer(ctx, containerID, inputsDir, pr, container.CopyToContainerOptions{})
+
+	routineErr := <-errChan
+
+	if uploadErr != nil {
+		return errors.Wrap(uploadErr, "docker upload failed")
 	}
 
-	wg.Wait()
-
-	if pipeErr != nil {
-		return errors.WithStack(pipeErr)
+	if routineErr != nil {
+		return errors.Wrap(routineErr, "tar creation failed")
 	}
 
 	e.logger.Debug("files uploaded successfully", "container_id", containerID)

@@ -10,6 +10,7 @@ import (
 	"github.com/bornholm/oplet/internal/http/handler/runner"
 	"github.com/bornholm/oplet/internal/http/handler/webui"
 	"github.com/bornholm/oplet/internal/http/handler/webui/common"
+	"github.com/bornholm/oplet/internal/http/pprof"
 	"github.com/pkg/errors"
 )
 
@@ -61,6 +62,8 @@ func NewHTTPServerFromConfig(ctx context.Context, conf *config.Config) (*http.Se
 
 	webui := webui.NewHandler(store, taskProvider, taskExecutor, fileStorage, slog.Default())
 	options = append(options, http.WithMount("/", authnMiddleware(authzMiddleware(webui))))
+
+	options = append(options, http.WithMount("/pprof/", authnMiddleware(pprof.NewHandler())))
 
 	// Create HTTP server
 

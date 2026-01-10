@@ -337,6 +337,7 @@ func (r *Runner) startLogStreaming(ctx context.Context, taskResp *TaskRequestRes
 				continue
 			}
 
+		OUTER:
 			for {
 				select {
 				case <-ctx.Done():
@@ -345,7 +346,7 @@ func (r *Runner) startLogStreaming(ctx context.Context, taskResp *TaskRequestRes
 				case e, ok := <-logEntries:
 					if !ok {
 						submitLogs()
-						break
+						break OUTER
 					}
 
 					if e.Clock >= localClock {

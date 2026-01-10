@@ -843,7 +843,7 @@ func statusClass(status store.TaskExecutionStatus) string {
 	case store.StatusPending:
 		return "is-warning"
 	default:
-		return "is-light"
+		return ""
 	}
 }
 
@@ -858,7 +858,7 @@ func statusIcon(status store.TaskExecutionStatus) string {
 	case store.StatusPending:
 		return "fas fa-clock"
 	default:
-		return "fas fa-question"
+		return "fas fa-ellipsis-h"
 	}
 }
 

@@ -22,7 +22,14 @@ type ExecutionRequest struct {
 	Inputs      map[string]io.ReadCloser // Files to upload to container
 	Timeout     time.Duration            // Execution timeout (optional)
 
+	Constraints Constraints
+
 	OnChange func(Execution)
+}
+
+type Constraints struct {
+	CPUs      float64 // CPU quota
+	MaxMemory int64   // Max memory in bytes
 }
 
 type LogEntry struct {
