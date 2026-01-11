@@ -3,6 +3,7 @@ package component
 import (
 	common "github.com/bornholm/oplet/internal/http/handler/webui/common/component"
 	"github.com/bornholm/oplet/internal/store"
+	"github.com/invopop/ctxi18n/i18n"
 )
 
 type TaskListPageVModel struct {
@@ -11,113 +12,93 @@ type TaskListPageVModel struct {
 }
 
 templ TaskListPage(vmodel TaskListPageVModel) {
-	@common.Page(common.WithTitle("Task management - Admin - Oplet")) {
-		<div class="container">
-			@common.Navbar(vmodel.Navbar)
-			<section class="section">
-				<div class="columns">
-					<!-- Aside Menu -->
-					<div class="column is-narrow">
-						<aside class="menu">
-							<p class="menu-label">
-								Administration
-							</p>
-							<ul class="menu-list">
-								<li><a href={ common.BaseURL(ctx, common.WithPath("/admin/")) }>Dashboard</a></li>
-								<li><a href={ common.BaseURL(ctx, common.WithPath("/admin/tasks")) } class="is-active">Tasks</a></li>
-								<li><a href={ common.BaseURL(ctx, common.WithPath("/admin/users")) }>Users</a></li>
-								<li><a href={ common.BaseURL(ctx, common.WithPath("/admin/runners")) }>Runners</a></li>
-							</ul>
-						</aside>
-					</div>
-					<!-- Main Content -->
-					<div class="column">
-						<div class="level">
-							<div class="level-left">
-								<div class="level-item">
-									<h1 class="title">Tasks</h1>
-								</div>
-							</div>
-							<div class="level-right">
-								<div class="level-item">
-									<a href={ common.BaseURL(ctx, common.WithPath("/admin/tasks/new")) } class="button is-primary">
-										<span class="icon">
-											<i class="fas fa-plus"></i>
-										</span>
-										<span>New task</span>
-									</a>
-								</div>
-							</div>
-						</div>
-						if len(vmodel.Tasks) == 0 {
-							<div class="notification">
-								<p>No registered task.</p>
-								<p>
-									<a href={ common.BaseURL(ctx, common.WithPath("/admin/tasks/new")) } class="button is-primary is-small">
-										Create the first task
-									</a>
-								</p>
-							</div>
-						} else {
-							<div class="table-container">
-								<table class="table is-fullwidth is-striped is-hoverable">
-									<thead>
-										<tr>
-											<th>Name</th>
-											<th>Author</th>
-											<th>Image Ref.</th>
-											<th>Description</th>
-											<th>Actions</th>
-										</tr>
-									</thead>
-									<tbody>
-										for _, task := range vmodel.Tasks {
-											<tr>
-												<td>
-													<strong>{ task.Name }</strong>
-												</td>
-												<td>{ task.Author }</td>
-												<td>
-													<code class="is-size-7">{ task.ImageRef }</code>
-												</td>
-												<td>
-													if len(task.Description) > 100 {
-														{ task.Description[:100] }...
-													} else {
-														{ task.Description }
-													}
-												</td>
-												<td>
-													<div class="buttons are-small">
-														<a href={ common.BaseURL(ctx, common.WithPath("/admin/tasks/", common.FormatID(task.ID), "/edit")) } class="button is-info">
-															<span class="icon">
-																<i class="fas fa-edit"></i>
-															</span>
-															<span>Edit</span>
-														</a>
-														<button class="button is-danger" onclick={ deleteTask(task.ID) }>
-															<span class="icon">
-																<i class="fas fa-trash"></i>
-															</span>
-															<span>Delete</span>
-														</button>
-													</div>
-												</td>
-											</tr>
-										}
-									</tbody>
-								</table>
-							</div>
-						}
-					</div>
+	@AdminPage(AdminPageVModel{
+		ActiveMenuLinkIndex: 1,
+		Title:               "admin.task_management",
+		Navbar:              vmodel.Navbar,
+	}) {
+		<div class="level">
+			<div class="level-left">
+				<div class="level-item">
+					<h1 class="title">{ i18n.T(ctx, "admin.tasks") }</h1>
 				</div>
-			</section>
+			</div>
+			<div class="level-right">
+				<div class="level-item">
+					<a href={ common.BaseURL(ctx, common.WithPath("/admin/tasks/new")) } class="button is-primary">
+						<span class="icon">
+							<i class="fas fa-plus"></i>
+						</span>
+						<span>{ i18n.T(ctx, "admin.new_task") }</span>
+					</a>
+				</div>
+			</div>
 		</div>
+		if len(vmodel.Tasks) == 0 {
+			<div class="notification">
+				<p>{ i18n.T(ctx, "admin.no_registered_task") }</p>
+				<p>
+					<a href={ common.BaseURL(ctx, common.WithPath("/admin/tasks/new")) } class="button is-primary is-small">
+						{ i18n.T(ctx, "admin.create_first_task") }
+					</a>
+				</p>
+			</div>
+		} else {
+			<div class="table-container">
+				<table class="table is-fullwidth is-striped is-hoverable">
+					<thead>
+						<tr>
+							<th>{ i18n.T(ctx, "admin.name") }</th>
+							<th>{ i18n.T(ctx, "admin.author") }</th>
+							<th>{ i18n.T(ctx, "admin.image_ref") }</th>
+							<th>{ i18n.T(ctx, "admin.description") }</th>
+							<th>{ i18n.T(ctx, "admin.actions") }</th>
+						</tr>
+					</thead>
+					<tbody>
+						for _, task := range vmodel.Tasks {
+							<tr>
+								<td>
+									<strong>{ task.Name }</strong>
+								</td>
+								<td>{ task.Author }</td>
+								<td>
+									<code class="is-size-7">{ task.ImageRef }</code>
+								</td>
+								<td>
+									if len(task.Description) > 100 {
+										{ task.Description[:100] }...
+									} else {
+										{ task.Description }
+									}
+								</td>
+								<td>
+									<div class="buttons are-small">
+										<a href={ common.BaseURL(ctx, common.WithPath("/admin/tasks/", common.FormatID(task.ID), "/edit")) } class="button is-info">
+											<span class="icon">
+												<i class="fas fa-edit"></i>
+											</span>
+											<span>{ i18n.T(ctx, "admin.edit") }</span>
+										</a>
+										<button class="button is-danger" onclick={ deleteTask(task.ID) }>
+											<span class="icon">
+												<i class="fas fa-trash"></i>
+											</span>
+											<span>{ i18n.T(ctx, "admin.delete") }</span>
+										</button>
+									</div>
+								</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			</div>
+		}
 	}
 }
 
 script deleteTask(taskID uint) {
-	if (confirm('Êtes-vous sûr de vouloir supprimer cette tâche ? Cette action est irréversible.')) {
+	if (confirm(i18n.T(ctx, "admin.delete_task_confirm"))) {
 		fetch('/admin/tasks/' + taskID, {
 			method: 'DELETE',
 			headers: {
@@ -127,10 +108,10 @@ script deleteTask(taskID uint) {
 			if (response.ok) {
 				location.reload();
 			} else {
-				alert('Erreur lors de la suppression de la tâche');
+				alert(i18n.T(ctx, "admin.delete_task_error"));
 			}
 		}).catch(error => {
-			alert('Erreur lors de la suppression de la tâche');
+			alert(i18n.T(ctx, "admin.delete_task_error"));
 		});
 	}
 }

@@ -1,0 +1,4 @@
+en:
+  # Login Page
+  authentication: "Authentication"
+  select_identity_provider: "Please select your identity provider"

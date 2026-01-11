@@ -1,5 +1,7 @@
 package component
 
+import "github.com/invopop/ctxi18n/i18n"
+
 type ErrorPageVModel struct {
 	Message string
 	Links   []LinkItem
@@ -11,19 +13,19 @@ type LinkItem struct {
 }
 
 templ ErrorPage(vmodel ErrorPageVModel) {
-	@Page(WithTitle("Error"), WithFooter(false)) {
+	@Page(WithTitle(i18n.T(ctx, "error")), WithFooter(false)) {
 		<section class="section is-fullheight">
 			<div class="is-flex is-justify-content-center is-align-items-center is-fullheight">
 				<article class="message is-danger">
 					<div class="message-header">
-						<p>Error</p>
+						<p>{ i18n.T(ctx, "error") }</p>
 					</div>
 					<div class="message-body">
 						{ vmodel.Message }
 						<p class="has-text-centered mt-5">
-							<a href={ BaseURL(ctx) }>Back to home page</a>
+							<a href={ BaseURL(ctx) }>{ i18n.T(ctx, "back_to_home") }</a>
 							<span>| </span>
-							<a href={ BaseURL(ctx, WithPath("/auth/logout")) }>Logout</a>
+							<a href={ BaseURL(ctx, WithPath("/auth/logout")) }>{ i18n.T(ctx, "logout") }</a>
 							for _, l := range vmodel.Links {
 								<span>| </span>
 								<a href={ templ.SafeURL(l.URL) }>{ l.Label }</a>

@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/bornholm/oplet/internal/http/authz"
 	"github.com/bornholm/oplet/internal/store"
+	"github.com/invopop/ctxi18n/i18n"
 	"github.com/pkg/errors"
 	"net/http"
 )
@@ -50,13 +51,13 @@ templ Navbar(vmodel NavbarVModel) {
 					<span class="icon">
 						<i class="fas fa-cubes"></i>
 					</span>
-					<span>Tasks</span>
+					<span>{ i18n.T(ctx, "tasks") }</span>
 				</a>
 				<a class="navbar-item" href={ BaseURL(ctx, WithPath("/tasks/executions")) }>
 					<span class="icon">
 						<i class="fas fa-clock"></i>
 					</span>
-					<span>History</span>
+					<span>{ i18n.T(ctx, "history") }</span>
 				</a>
 			</div>
 			<div class="navbar-end">
@@ -73,7 +74,7 @@ templ Navbar(vmodel NavbarVModel) {
 								<span class="icon">
 									<i class="fa fa-cog"></i>
 								</span>
-								<span>Admin</span>
+								<span>{ i18n.T(ctx, "admin") }</span>
 							</a>
 							<hr class="navbar-divider"/>
 						}
@@ -81,7 +82,7 @@ templ Navbar(vmodel NavbarVModel) {
 							<span class="icon">
 								<i class="fa fa-sign-out"></i>
 							</span>
-							<span>Logout</span>
+							<span>{ i18n.T(ctx, "logout") }</span>
 						</a>
 					</div>
 				</div>

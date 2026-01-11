@@ -3,6 +3,7 @@ package component
 import (
 	"fmt"
 	common "github.com/bornholm/oplet/internal/http/handler/webui/common/component"
+	"github.com/invopop/ctxi18n/i18n"
 )
 
 type Provider struct {
@@ -18,14 +19,14 @@ type LoginPageVModel struct {
 const defaultMaxCollections = 3
 
 templ LoginPage(vmodel LoginPageVModel) {
-	@common.Page(common.WithTitle("Authentification")) {
+	@common.Page(common.WithTitle(i18n.T(ctx, "authentication"))) {
 		<div class="is-flex is-justify-content-center is-align-items-center" style="height:100%">
 			<nav class="panel" style="min-width: 33%">
 				<div class="panel-heading has-background-link is-flex">
 					<div style="flex:1">
 						<span class="title">Oplet</span>
 						<br/>
-						<span class="subtitle">Please select your identity provider</span>
+						<span class="subtitle">{ i18n.T(ctx, "select_identity_provider") }</span>
 					</div>
 				</div>
 				for _, p := range vmodel.Providers {

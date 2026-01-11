@@ -13,6 +13,8 @@ type User struct {
 	IsActive    bool   `gorm:"index"`
 
 	TaskExecutions []*TaskExecution `gorm:"constraint:OnDelete:CASCADE;"`
+
+	PreferredLanguage string
 }
 
 func NewUser(provider, subject, displayName, email, role string) *User {

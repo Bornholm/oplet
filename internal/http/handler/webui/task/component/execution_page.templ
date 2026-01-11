@@ -4,6 +4,7 @@ import (
 	"fmt"
 	common "github.com/bornholm/oplet/internal/http/handler/webui/common/component"
 	"github.com/bornholm/oplet/internal/store"
+	"github.com/invopop/ctxi18n/i18n"
 	"strings"
 	"time"
 )
@@ -18,7 +19,7 @@ type ExecutionPageVModel struct {
 }
 
 templ ExecutionPage(vmodel ExecutionPageVModel) {
-	@common.Page(common.WithTitle(vmodel.Task.Name + " | Execution Progress")) {
+	@common.Page(common.WithTitle(vmodel.Task.Name + " | " + i18n.T(ctx, "execution_progress"))) {
 		<div class="container">
 			@common.Navbar(vmodel.Navbar)
 			<section class="section">
@@ -40,9 +41,9 @@ templ ExecutionPage(vmodel ExecutionPageVModel) {
 templ ExecutionBreadcrumb(task *store.Task, execution *store.TaskExecution) {
 	@common.Breadcrumb(common.BreadcrumbVModel{
 		Items: []common.BreadcrumbItem{
-			{Label: "Tasks", URL: "/tasks", Icon: "fa-tasks"},
+			{Label: i18n.T(ctx, "tasks"), URL: "/tasks", Icon: "fa-tasks"},
 			{Label: task.Name, URL: fmt.Sprintf("/tasks/%d/executions", task.ID), Icon: "fa-cube"},
-			{Label: fmt.Sprintf("Execution #%d", execution.ID), URL: "", Icon: "fa-play"},
+			{Label: i18n.T(ctx, "execution_number", execution.ID), URL: "", Icon: "fa-play"},
 		},
 	})
 }
@@ -59,8 +60,8 @@ templ ExecutionHeader(task *store.Task, execution *store.TaskExecution) {
 						{ task.Name }
 					</p>
 					<p class="subtitle is-6">
-						Execution #{ fmt.Sprintf("%d", execution.ID) } • 
-						Started { execution.CreatedAt.Format("Jan 2, 2006 15:04") }
+						{ i18n.T(ctx, "execution_number", execution.ID) } •
+						{ i18n.T(ctx, "started") } { execution.CreatedAt.Format("Jan 2, 2006 15:04") }
 					</p>
 				</div>
 			</div>
@@ -80,13 +81,13 @@ templ LogViewer(task *store.Task, executionID uint, logs []*store.TaskExecutionL
 				<span class="icon">
 					<i class="fas fa-terminal"></i>
 				</span>
-				Logs
+				{ i18n.T(ctx, "logs") }
 				if isRunning {
 					<span class="tag is-success is-light ml-2">
 						<span class="icon">
 							<i class="fas fa-circle fa-pulse"></i>
 						</span>
-						<span>Live</span>
+						<span>{ i18n.T(ctx, "live") }</span>
 					</span>
 				}
 			</p>
@@ -133,7 +134,7 @@ templ ExecutionSidebar(execution *store.TaskExecution, outputFiles []*store.Task
 				<span class="icon">
 					<i class="fas fa-info-circle"></i>
 				</span>
-				Details
+				{ i18n.T(ctx, "details") }
 			</p>
 		</div>
 		<div class="card-content">
@@ -147,7 +148,7 @@ templ ExecutionSidebar(execution *store.TaskExecution, outputFiles []*store.Task
 					<span class="icon">
 						<i class="fas fa-file"></i>
 					</span>
-					Outputs
+					{ i18n.T(ctx, "outputs") }
 				</p>
 			</div>
 			<div class="card-content">
@@ -162,38 +163,38 @@ templ ExecutionMetadata(execution *store.TaskExecution) {
 		<table class="table is-fullwidth">
 			<tbody>
 				<tr>
-					<td><strong>Execution ID</strong></td>
+					<td><strong>{ i18n.T(ctx, "execution_id") }</strong></td>
 					<td>{ fmt.Sprintf("%d", execution.ID) }</td>
 				</tr>
 				<tr>
-					<td><strong>Container ID</strong></td>
+					<td><strong>{ i18n.T(ctx, "container_id") }</strong></td>
 					<td>
 						if execution.ContainerID != "" {
 							<code>{ execution.ContainerID[:12] }...</code>
 						} else {
-							<span class="has-text-grey">Not assigned</span>
+							<span class="has-text-grey">{ i18n.T(ctx, "not_assigned") }</span>
 						}
 					</td>
 				</tr>
 				<tr>
-					<td><strong>Created</strong></td>
+					<td><strong>{ i18n.T(ctx, "created") }</strong></td>
 					<td>{ execution.CreatedAt.Format("Jan 2, 2006 15:04:05") }</td>
 				</tr>
 				if execution.StartedAt != nil {
 					<tr>
-						<td><strong>Started</strong></td>
+						<td><strong>{ i18n.T(ctx, "started") }</strong></td>
 						<td>{ execution.StartedAt.Format("Jan 2, 2006 15:04:05") }</td>
 					</tr>
 				}
 				if execution.FinishedAt != nil {
 					<tr>
-						<td><strong>Finished</strong></td>
+						<td><strong>{ i18n.T(ctx, "finished") }</strong></td>
 						<td>{ execution.FinishedAt.Format("Jan 2, 2006 15:04:05") }</td>
 					</tr>
 				}
 				if execution.ErrorMessage != "" {
 					<tr>
-						<td><strong>Error</strong></td>
+						<td><strong>{ i18n.T(ctx, "error") }</strong></td>
 						<td><span class="has-text-danger">{ execution.ErrorMessage }</span></td>
 					</tr>
 				}
@@ -208,7 +209,7 @@ templ ResponsiveFileList(taskID uint, executionID uint, files []*store.TaskExecu
 			<span class="icon is-large">
 				<i class="fas fa-folder-open fa-2x"></i>
 			</span>
-			<p>No output files generated</p>
+			<p>{ i18n.T(ctx, "no_output_files") }</p>
 		</div>
 	} else {
 		<div class="file-list">
@@ -247,7 +248,7 @@ templ ResponsiveFileItem(taskID uint, executionID uint, file store.TaskExecution
 					<span class="icon">
 						<i class="fas fa-download"></i>
 					</span>
-					<span class="is-hidden-mobile">Download</span>
+					<span class="is-hidden-mobile">{ i18n.T(ctx, "download") }</span>
 				</a>
 			</div>
 		</div>

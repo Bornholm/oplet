@@ -1,9 +1,9 @@
 package component
 
 import (
-	"fmt"
 	common "github.com/bornholm/oplet/internal/http/handler/webui/common/component"
 	"github.com/bornholm/oplet/internal/store"
+	"github.com/invopop/ctxi18n/i18n"
 )
 
 type IndexPageVModel struct {
@@ -13,7 +13,7 @@ type IndexPageVModel struct {
 }
 
 templ IndexPage(vmodel IndexPageVModel) {
-	@common.Page(common.WithTitle("Tasks")) {
+	@common.Page(common.WithTitle(i18n.T(ctx, "tasks"))) {
 		<div class="container">
 			@common.Navbar(vmodel.Navbar)
 			<section class="section">
@@ -25,7 +25,7 @@ templ IndexPage(vmodel IndexPageVModel) {
 								class="input is-medium"
 								type="text"
 								name="q"
-								placeholder="Search tasks by name, author, description, or image reference..."
+								placeholder={ i18n.T(ctx, "search_placeholder") }
 								value={ vmodel.SearchQuery }
 							/>
 						</div>
@@ -34,7 +34,7 @@ templ IndexPage(vmodel IndexPageVModel) {
 								<span class="icon">
 									<i class="fas fa-search"></i>
 								</span>
-								<span>Search</span>
+								<span>{ i18n.T(ctx, "search") }</span>
 							</button>
 						</div>
 					</div>
@@ -46,9 +46,9 @@ templ IndexPage(vmodel IndexPageVModel) {
 							<div class="column is-full">
 								<div class="notification">
 									if vmodel.SearchQuery != "" {
-										No tasks found matching your search criteria.
+										{ i18n.T(ctx, "no_tasks_found") }
 									} else {
-										No tasks available.
+										{ i18n.T(ctx, "no_tasks_available") }
 									}
 								</div>
 							</div>
@@ -79,7 +79,7 @@ templ TaskCard(task store.Task) {
 				</div>
 				<div class="media-content">
 					<p class="title is-5">{ task.Name }</p>
-					<p class="subtitle is-6 has-text-grey">by { task.Author }</p>
+					<p class="subtitle is-6 has-text-grey">{ i18n.T(ctx, "by_author", task.Author) }</p>
 				</div>
 			</div>
 			<div class="content">
@@ -96,7 +96,7 @@ templ TaskCard(task store.Task) {
 							<span class="icon">
 								<i class="fas fa-history"></i>
 							</span>
-							<span>{ fmt.Sprintf("%d executions", len(task.Executions)) }</span>
+							<span>{ i18n.T(ctx, "executions_count", len(task.Executions)) }</span>
 						</span>
 					}
 				</div>
@@ -110,7 +110,7 @@ templ TaskCard(task store.Task) {
 				<span class="icon">
 					<i class="fas fa-play"></i>
 				</span>
-				<span>Execute</span>
+				<span>{ i18n.T(ctx, "execute") }</span>
 			</a>
 			<a
 				href={ common.BaseURL(ctx, common.WithPathf("/tasks/%d/executions", task.ID)) }
@@ -119,7 +119,7 @@ templ TaskCard(task store.Task) {
 				<span class="icon">
 					<i class="fas fa-history"></i>
 				</span>
-				<span>History</span>
+				<span>{ i18n.T(ctx, "history") }</span>
 			</a>
 		</footer>
 	</div>

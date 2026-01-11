@@ -1,0 +1,62 @@
+fr:
+  admin:
+    # Admin Dashboard
+    dashboard: "Tableau de bord"
+    administration: "Administration"
+
+    # User Management
+    user_management: "Gestion des utilisateurs"
+    users: "Utilisateurs"
+    users_count: "%s utilisateurs"
+    no_users_found: "Aucun utilisateur trouvé."
+    display_name: "Nom d'affichage"
+    provider: "Fournisseur"
+    email: "Email"
+    role: "Rôle"
+    status: "Statut"
+    created: "Créé"
+    actions: "Actions"
+    admin: "Administrateur"
+    user: "Utilisateur"
+    active: "Actif"
+    inactive: "Inactif"
+    edit: "Modifier"
+
+    # Task Management
+    task_management: "Gestion des tâches"
+    tasks: "Tâches"
+    no_registered_task: "Aucune tâche enregistrée."
+    create_first_task: "Créer la première tâche"
+    new_task: "Nouvelle tâche"
+    name: "Nom"
+    author: "Auteur"
+    image_ref: "Réf. image"
+    description: "Description"
+    delete: "Supprimer"
+    delete_task_confirm: "Êtes-vous sûr de vouloir supprimer cette tâche ? Cette action est irréversible."
+    delete_task_error: "Erreur lors de la suppression de la tâche"
+
+    # Runner Management
+    runner_management: "Gestion des exécuteurs"
+    runners: "Exécuteurs"
+    runners_count: "%s exécuteurs"
+    no_registered_runners: "Aucun exécuteur enregistré."
+    create_first_runner: "Créer le premier exécuteur"
+    new_runner: "Nouvel exécuteur"
+    id: "ID"
+    last_seen: "Dernière vue"
+    online: "En ligne"
+    offline: "Hors ligne"
+    never_connected: "Jamais connecté"
+    never: "Jamais"
+    delete_runner_confirm: "Êtes-vous sûr de vouloir supprimer cet exécuteur ? Cette action est irréversible."
+    delete_runner_error: "Erreur lors de la suppression de l'exécuteur"
+
+    # Time formats
+    just_now: "À l'instant"
+    minute_ago: "il y a 1 minute"
+    minutes_ago: "il y a %s minutes"
+    hour_ago: "il y a 1 heure"
+    hours_ago: "il y a %s heures"
+    day_ago: "il y a 1 jour"
+    days_ago: "il y a %s jours"

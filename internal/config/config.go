@@ -11,6 +11,7 @@ type Config struct {
 	Storage Storage `envPrefix:"STORAGE_"`
 	Seed    Seed    `envPrefix:"SEED_"`
 	Runner  Runner  `envPrefix:"RUNNER_"`
+	I18n    I18n    `envPrefix:"I18N_"`
 }
 
 func Parse() (*Config, error) {

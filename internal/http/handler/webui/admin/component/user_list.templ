@@ -4,6 +4,7 @@ import (
 	"github.com/bornholm/oplet/internal/http/authz"
 	common "github.com/bornholm/oplet/internal/http/handler/webui/common/component"
 	"github.com/bornholm/oplet/internal/store"
+	"github.com/invopop/ctxi18n/i18n"
 	"strconv"
 )
 
@@ -14,105 +15,85 @@ type UserListPageVModel struct {
 }
 
 templ UserListPage(vmodel UserListPageVModel) {
-	@common.Page(common.WithTitle("User management - Admin - Oplet")) {
-		<div class="container">
-			@common.Navbar(vmodel.Navbar)
-			<section class="section">
-				<div class="columns">
-					<!-- Aside Menu -->
-					<div class="column is-narrow">
-						<aside class="menu">
-							<p class="menu-label">
-								Administration
-							</p>
-							<ul class="menu-list">
-								<li><a href={ common.BaseURL(ctx, common.WithPath("/admin/")) }>Dashboard</a></li>
-								<li><a href={ common.BaseURL(ctx, common.WithPath("/admin/tasks")) }>Tasks</a></li>
-								<li><a href={ common.BaseURL(ctx, common.WithPath("/admin/users")) } class="is-active">Users</a></li>
-								<li><a href={ common.BaseURL(ctx, common.WithPath("/admin/runners")) }>Runners</a></li>
-							</ul>
-						</aside>
-					</div>
-					<!-- Main Content -->
-					<div class="column">
-						<div class="level">
-							<div class="level-left">
-								<div class="level-item">
-									<h1 class="title">Users</h1>
-								</div>
-							</div>
-							<div class="level-right">
-								<div class="level-item">
-									<span class="tag is-large">{ strconv.FormatInt(vmodel.TotalUsers, 10) } users</span>
-								</div>
-							</div>
-						</div>
-						if len(vmodel.Users) == 0 {
-							<div class="notification">
-								<p>No users found.</p>
-							</div>
-						} else {
-							<div class="table-container">
-								<table class="table is-fullwidth is-striped is-hoverable">
-									<thead>
-										<tr>
-											<th>Display Name</th>
-											<th>Provider</th>
-											<th>Email</th>
-											<th>Role</th>
-											<th>Status</th>
-											<th>Created</th>
-											<th>Actions</th>
-										</tr>
-									</thead>
-									<tbody>
-										for _, user := range vmodel.Users {
-											<tr>
-												<td>
-													<strong>{ user.DisplayName }</strong>
-												</td>
-												<td>
-													<span class="tag">{ user.Provider }</span>
-												</td>
-												<td>
-													<code class="is-size-7">{ user.Email }</code>
-												</td>
-												<td>
-													if user.Role == authz.RoleAdmin {
-														<span class="tag is-danger">Admin</span>
-													} else {
-														<span class="tag is-info">User</span>
-													}
-												</td>
-												<td>
-													if user.IsActive {
-														<span class="tag is-success">Active</span>
-													} else {
-														<span class="tag is-warning">Inactive</span>
-													}
-												</td>
-												<td>
-													<span class="is-size-7">{ user.CreatedAt.Format("2006-01-02 15:04") }</span>
-												</td>
-												<td>
-													<div class="buttons are-small">
-														<a href={ common.BaseURL(ctx, common.WithPath("/admin/users/", strconv.FormatUint(uint64(user.ID), 10), "/edit")) } class="button is-info">
-															<span class="icon">
-																<i class="fas fa-edit"></i>
-															</span>
-															<span>Edit</span>
-														</a>
-													</div>
-												</td>
-											</tr>
-										}
-									</tbody>
-								</table>
-							</div>
-						}
-					</div>
+	@AdminPage(AdminPageVModel{
+		ActiveMenuLinkIndex: 2,
+		Title:               "admin.user_management",
+		Navbar:              vmodel.Navbar,
+	}) {
+		<div class="level">
+			<div class="level-left">
+				<div class="level-item">
+					<h1 class="title">{ i18n.T(ctx, "admin.users") }</h1>
 				</div>
-			</section>
+			</div>
+			<div class="level-right">
+				<div class="level-item">
+					<span class="tag is-large">{ i18n.T(ctx, "admin.users_count", strconv.FormatInt(vmodel.TotalUsers, 10)) }</span>
+				</div>
+			</div>
 		</div>
+		if len(vmodel.Users) == 0 {
+			<div class="notification">
+				<p>{ i18n.T(ctx, "admin.no_users_found") }</p>
+			</div>
+		} else {
+			<div class="table-container">
+				<table class="table is-fullwidth is-striped is-hoverable">
+					<thead>
+						<tr>
+							<th>{ i18n.T(ctx, "admin.display_name") }</th>
+							<th>{ i18n.T(ctx, "admin.provider") }</th>
+							<th>{ i18n.T(ctx, "admin.email") }</th>
+							<th>{ i18n.T(ctx, "admin.role") }</th>
+							<th>{ i18n.T(ctx, "admin.status") }</th>
+							<th>{ i18n.T(ctx, "admin.created") }</th>
+							<th>{ i18n.T(ctx, "admin.actions") }</th>
+						</tr>
+					</thead>
+					<tbody>
+						for _, user := range vmodel.Users {
+							<tr>
+								<td>
+									<strong>{ user.DisplayName }</strong>
+								</td>
+								<td>
+									<span class="tag">{ user.Provider }</span>
+								</td>
+								<td>
+									<code class="is-size-7">{ user.Email }</code>
+								</td>
+								<td>
+									if user.Role == authz.RoleAdmin {
+										<span class="tag is-danger">{ i18n.T(ctx, "admin.admin") }</span>
+									} else {
+										<span class="tag is-info">{ i18n.T(ctx, "admin.user") }</span>
+									}
+								</td>
+								<td>
+									if user.IsActive {
+										<span class="tag is-success">{ i18n.T(ctx, "admin.active") }</span>
+									} else {
+										<span class="tag is-warning">{ i18n.T(ctx, "admin.inactive") }</span>
+									}
+								</td>
+								<td>
+									<span class="is-size-7">{ user.CreatedAt.Format("2006-01-02 15:04") }</span>
+								</td>
+								<td>
+									<div class="buttons are-small">
+										<a href={ common.BaseURL(ctx, common.WithPath("/admin/users/", strconv.FormatUint(uint64(user.ID), 10), "/edit")) } class="button is-info">
+											<span class="icon">
+												<i class="fas fa-edit"></i>
+											</span>
+											<span>{ i18n.T(ctx, "admin.edit") }</span>
+										</a>
+									</div>
+								</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			</div>
+		}
 	}
 }

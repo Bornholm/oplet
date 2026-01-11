@@ -1,6 +1,9 @@
 package component
 
-import "time"
+import (
+	"github.com/invopop/ctxi18n/i18n"
+	"time"
+)
 
 type ErrorDisplayVModel struct {
 	ExecutionID uint
@@ -30,11 +33,11 @@ templ ErrorDisplay(vmodel ErrorDisplayVModel) {
 				</div>
 				<div class="level-item">
 					<div>
-						<p class="title is-5">Execution Failed</p>
+						<p class="title is-5">{ i18n.T(ctx, "execution_failed") }</p>
 						<p class="subtitle is-6">{ vmodel.Message }</p>
 						if vmodel.Details != "" {
 							<details class="mt-2">
-								<summary class="has-text-weight-semibold">Technical Details</summary>
+								<summary class="has-text-weight-semibold">{ i18n.T(ctx, "technical_details") }</summary>
 								<pre class="mt-2 p-2 has-background-light">{ vmodel.Details }</pre>
 							</details>
 						}
@@ -70,9 +73,9 @@ templ ConnectionStatus(isConnected bool, lastUpdate time.Time) {
 				</span>
 				<span class="is-size-7">
 					if isConnected {
-						Connected • Last update { formatRelativeTime(lastUpdate) }
+						{ i18n.T(ctx, "connected") } • { i18n.T(ctx, "last_update") } { formatRelativeTime(lastUpdate) }
 					} else {
-						Connection lost • Retrying...
+						{ i18n.T(ctx, "connection_lost") }
 					}
 				</span>
 			</div>
@@ -84,7 +87,7 @@ templ ConnectionStatus(isConnected bool, lastUpdate time.Time) {
 						<span class="icon">
 							<i class="fas fa-redo"></i>
 						</span>
-						<span>Retry</span>
+						<span>{ i18n.T(ctx, "retry") }</span>
 					</button>
 				}
 			</div>

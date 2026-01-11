@@ -7,30 +7,6 @@ type IndexPageVModel struct {
 }
 
 templ IndexPage(vmodel IndexPageVModel) {
-	@common.Page(common.WithTitle("Dashboard - Admin - Oplet")) {
-		<div class="container">
-			@common.Navbar(vmodel.Navbar)
-			<section class="section">
-				<div class="columns">
-					<!-- Aside Menu -->
-					<div class="column is-narrow">
-						<aside class="menu">
-							<p class="menu-label">
-								Administration
-							</p>
-							<ul class="menu-list">
-								<li><a href={ common.BaseURL(ctx, common.WithPath("/admin/")) } class="is-active">Dashboard</a></li>
-								<li><a href={ common.BaseURL(ctx, common.WithPath("/admin/tasks")) }>Tasks</a></li>
-								<li><a href={ common.BaseURL(ctx, common.WithPath("/admin/users")) }>Users</a></li>
-							</ul>
-						</aside>
-					</div>
-					<!-- Main Content -->
-					<div class="column">
-						<section class="section"></section>
-					</div>
-				</div>
-			</section>
-		</div>
+	@AdminPage(AdminPageVModel{ActiveMenuLinkIndex: 0, Title: "admin.dashboard", Navbar: vmodel.Navbar}) {
 	}
 }

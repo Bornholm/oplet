@@ -4,6 +4,7 @@ import (
 	common "github.com/bornholm/oplet/internal/http/handler/webui/common/component"
 	"github.com/bornholm/oplet/internal/http/handler/webui/common/form"
 	"github.com/bornholm/oplet/internal/task"
+	"github.com/invopop/ctxi18n/i18n"
 )
 
 type NewTaskPageVModel struct {
@@ -14,7 +15,7 @@ type NewTaskPageVModel struct {
 }
 
 templ NewTaskPage(vmodel NewTaskPageVModel) {
-	@common.Page(common.WithTitle(vmodel.Task.Name + " | New Task")) {
+	@common.Page(common.WithTitle(vmodel.Task.Name + " | " + i18n.T(ctx, "new_task"))) {
 		<div class="container">
 			@common.Navbar(vmodel.Navbar)
 			<section class="section">
@@ -44,24 +45,24 @@ templ NewTaskPage(vmodel NewTaskPageVModel) {
 														<span class="icon">
 															<i class="fas fa-play"></i>
 														</span>
-														<span>Execute</span>
+														<span>{ i18n.T(ctx, "execute") }</span>
 													</button>
 												</div>
 												<div class="control">
-													<a class="button is-light" href={ common.BaseURL(ctx, common.WithPath("/tasks")) }>Cancel</a>
+													<a class="button is-light" href={ common.BaseURL(ctx, common.WithPath("/tasks")) }>{ i18n.T(ctx, "cancel") }</a>
 												</div>
 											</div>
 										}
 									} else {
 										<div class="notification">
-											<p>This task has no configurable inputs.</p>
+											<p>{ i18n.T(ctx, "no_configurable_inputs") }</p>
 											<div class="field">
 												<div class="control">
 													<a class="button is-primary" hx-method="post" href={ common.BaseURL(ctx, common.WithPathf("/tasks/%d/execute", vmodel.TaskID)) }>
 														<span class="icon">
 															<i class="fas fa-play"></i>
 														</span>
-														<span>Execute</span>
+														<span>{ i18n.T(ctx, "execute") }</span>
 													</a>
 												</div>
 											</div>
@@ -73,7 +74,7 @@ templ NewTaskPage(vmodel NewTaskPageVModel) {
 					</div>
 				} else {
 					<div class="notification is-danger">
-						<p>Task not found.</p>
+						<p>{ i18n.T(ctx, "task_not_found") }</p>
 					</div>
 				}
 			</section>

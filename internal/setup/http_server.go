@@ -10,6 +10,7 @@ import (
 	"github.com/bornholm/oplet/internal/http/handler/runner"
 	"github.com/bornholm/oplet/internal/http/handler/webui"
 	"github.com/bornholm/oplet/internal/http/handler/webui/common"
+	"github.com/bornholm/oplet/internal/http/i18n"
 	"github.com/bornholm/oplet/internal/http/pprof"
 	"github.com/pkg/errors"
 )
@@ -21,7 +22,7 @@ func NewHTTPServerFromConfig(ctx context.Context, conf *config.Config) (*http.Se
 	}
 
 	authnMiddleware := authn.Middleware()
-
+	i18nMiddleware := i18n.Middleware(conf.I18n.DefaultLanguage)
 	authzMiddleware, err := getAuthzMiddlewareFromConfig(ctx, conf)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not configure authz handler from config")
@@ -33,7 +34,7 @@ func NewHTTPServerFromConfig(ctx context.Context, conf *config.Config) (*http.Se
 		http.WithAddress(conf.HTTP.Address),
 		http.WithBaseURL(conf.HTTP.BaseURL),
 		http.WithMount("/assets/", assets),
-		http.WithMount("/auth/", authn),
+		http.WithMount("/auth/", i18nMiddleware(authn)),
 		http.WithMount("/metrics/", authnMiddleware(authzMiddleware(metrics.NewHandler()))),
 	}
 
@@ -61,7 +62,7 @@ func NewHTTPServerFromConfig(ctx context.Context, conf *config.Config) (*http.Se
 	options = append(options, http.WithMount("/runner/", runner))
 
 	webui := webui.NewHandler(store, taskProvider, taskExecutor, fileStorage, slog.Default())
-	options = append(options, http.WithMount("/", authnMiddleware(authzMiddleware(webui))))
+	options = append(options, http.WithMount("/", authnMiddleware(authzMiddleware(i18nMiddleware(webui)))))
 
 	options = append(options, http.WithMount("/pprof/", authnMiddleware(pprof.NewHandler())))
 

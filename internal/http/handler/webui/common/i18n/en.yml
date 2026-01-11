@@ -1,0 +1,14 @@
+en:
+  # Error Page
+  error: "Error"
+  back_to_home: "Back to home page"
+  logout: "Logout"
+
+  # Navbar
+  tasks: "Tasks"
+  history: "History"
+  admin: "Admin"
+
+  # Page Footer
+  version: "Version %s"
+  documentation: "Documentation"

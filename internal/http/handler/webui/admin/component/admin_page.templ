@@ -1,0 +1,32 @@
+package component
+
+import (
+	common "github.com/bornholm/oplet/internal/http/handler/webui/common/component"
+	"github.com/invopop/ctxi18n/i18n"
+)
+
+type AdminPageVModel struct {
+	ActiveMenuLinkIndex int
+	Title               string
+	Navbar              common.NavbarVModel
+}
+
+templ AdminPage(vmodel AdminPageVModel) {
+	@common.Page(common.WithTitle(i18n.T(ctx, vmodel.Title) + " - " + i18n.T(ctx, "admin.admin") + " - Oplet")) {
+		<div class="container">
+			@common.Navbar(vmodel.Navbar)
+			<section class="section">
+				<div class="columns">
+					<!-- Aside Menu -->
+					<div class="column is-narrow">
+						@AdminMenu(vmodel.ActiveMenuLinkIndex)
+					</div>
+					<!-- Main Content -->
+					<div class="column">
+						{ children... }
+					</div>
+				</div>
+			</section>
+		</div>
+	}
+}

@@ -1,0 +1,20 @@
+package component
+
+import (
+	common "github.com/bornholm/oplet/internal/http/handler/webui/common/component"
+	"github.com/invopop/ctxi18n/i18n"
+)
+
+templ AdminMenu(activeLinkIndex int) {
+	<aside class="menu">
+		<p class="menu-label">
+			{ i18n.T(ctx, "admin.administration") }
+		</p>
+		<ul class="menu-list">
+			<li><a href={ common.BaseURL(ctx, common.WithPath("/admin/")) } class={ templ.KV("is-active", activeLinkIndex == 0) }>{ i18n.T(ctx, "admin.dashboard") }</a></li>
+			<li><a href={ common.BaseURL(ctx, common.WithPath("/admin/tasks")) } class={ templ.KV("is-active", activeLinkIndex == 1) }>{ i18n.T(ctx, "admin.tasks") }</a></li>
+			<li><a href={ common.BaseURL(ctx, common.WithPath("/admin/users")) } class={ templ.KV("is-active", activeLinkIndex == 2) }>{ i18n.T(ctx, "admin.users") }</a></li>
+			<li><a href={ common.BaseURL(ctx, common.WithPath("/admin/runners")) } class={ templ.KV("is-active", activeLinkIndex == 3) }>{ i18n.T(ctx, "admin.runners") }</a></li>
+		</ul>
+	</aside>
+}

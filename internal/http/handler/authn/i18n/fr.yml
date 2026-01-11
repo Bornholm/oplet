@@ -1,0 +1,4 @@
+fr:
+  # Login Page
+  authentication: "Authentification"
+  select_identity_provider: "Veuillez sélectionner votre fournisseur d'identité"

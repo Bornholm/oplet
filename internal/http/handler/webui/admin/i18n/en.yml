@@ -1,0 +1,62 @@
+en:
+  admin:
+    # Admin Dashboard
+    dashboard: "Dashboard"
+    administration: "Administration"
+
+    # User Management
+    user_management: "User management"
+    users: "Users"
+    users_count: "%s users"
+    no_users_found: "No users found."
+    display_name: "Display Name"
+    provider: "Provider"
+    email: "Email"
+    role: "Role"
+    status: "Status"
+    created: "Created"
+    actions: "Actions"
+    admin: "Admin"
+    user: "User"
+    active: "Active"
+    inactive: "Inactive"
+    edit: "Edit"
+
+    # Task Management
+    task_management: "Task management"
+    tasks: "Tasks"
+    no_registered_task: "No registered task."
+    create_first_task: "Create the first task"
+    new_task: "New task"
+    name: "Name"
+    author: "Author"
+    image_ref: "Image Ref."
+    description: "Description"
+    delete: "Delete"
+    delete_task_confirm: "Are you sure you want to delete this task? This action is irreversible."
+    delete_task_error: "Error deleting task"
+
+    # Runner Management
+    runner_management: "Runner management"
+    runners: "Runners"
+    runners_count: "%s runners"
+    no_registered_runners: "No registered runners."
+    create_first_runner: "Create the first runner"
+    new_runner: "New runner"
+    id: "ID"
+    last_seen: "Last Seen"
+    online: "Online"
+    offline: "Offline"
+    never_connected: "Never connected"
+    never: "Never"
+    delete_runner_confirm: "Are you sure you want to delete this runner? This action is irreversible."
+    delete_runner_error: "Error deleting runner"
+
+    # Time formats
+    just_now: "Just now"
+    minute_ago: "1 minute ago"
+    minutes_ago: "%s minutes ago"
+    hour_ago: "1 hour ago"
+    hours_ago: "%s hours ago"
+    day_ago: "1 day ago"
+    days_ago: "%s days ago"

@@ -1,6 +1,9 @@
 package component
 
-import "github.com/bornholm/oplet/internal/build"
+import (
+	"github.com/bornholm/oplet/internal/build"
+	"github.com/invopop/ctxi18n/i18n"
+)
 
 type PageOptions struct {
 	Title         string
@@ -72,9 +75,9 @@ templ Page(funcs ...PageOptionFunc) {
 					<footer class="footer">
 						<div class="content has-text-centered">
 							<p>
-								<a href={ templ.SafeURL("https://github.com/Bornholm/oplet/releases/v" + build.Version) } target="_blank">Version { build.Version }</a>
-								| 
-								<a href={ templ.SafeURL("https://github.com/Bornholm/oplet/tree/v" + build.Version + "/doc") } target="_blank">Documentation</a>
+								<a href={ templ.SafeURL("https://github.com/Bornholm/oplet/releases/v" + build.Version) } target="_blank">{ i18n.T(ctx, "version", build.Version) }</a>
+								|
+								<a href={ templ.SafeURL("https://github.com/Bornholm/oplet/tree/v" + build.Version + "/doc") } target="_blank">{ i18n.T(ctx, "documentation") }</a>
 							</p>
 						</div>
 					</footer>

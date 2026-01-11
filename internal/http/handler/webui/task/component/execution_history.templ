@@ -6,6 +6,7 @@ import (
 	common "github.com/bornholm/oplet/internal/http/handler/webui/common/component"
 	"github.com/bornholm/oplet/internal/store"
 	"github.com/bornholm/oplet/internal/store/repository/execution"
+	"github.com/invopop/ctxi18n/i18n"
 	"time"
 )
 
@@ -39,7 +40,7 @@ type ExecutionWithTask struct {
 }
 
 templ TaskExecutionHistoryPage(vmodel TaskExecutionHistoryPageVModel) {
-	@common.Page(common.WithTitle(vmodel.Task.Name + " | Execution History")) {
+	@common.Page(common.WithTitle(vmodel.Task.Name + " | " + i18n.T(ctx, "execution_history"))) {
 		<div class="container">
 			@common.Navbar(vmodel.Navbar)
 			<section class="section">
@@ -56,9 +57,9 @@ templ TaskExecutionHistoryPage(vmodel TaskExecutionHistoryPageVModel) {
 templ TaskHistoryBreadcrumb(task *store.Task) {
 	@common.Breadcrumb(common.BreadcrumbVModel{
 		Items: []common.BreadcrumbItem{
-			{Label: "Tasks", URL: "/tasks", Icon: "fa-tasks"},
+			{Label: i18n.T(ctx, "tasks"), URL: "/tasks", Icon: "fa-tasks"},
 			{Label: task.Name, URL: fmt.Sprintf("/tasks/%d/new", task.ID), Icon: "fa-cube"},
-			{Label: "Execution History", URL: "", Icon: "fa-history"},
+			{Label: i18n.T(ctx, "execution_history"), URL: "", Icon: "fa-history"},
 		},
 	})
 }
@@ -72,7 +73,7 @@ templ TaskExecutionHistoryHeader(task *store.Task) {
 						<span class="icon">
 							<i class="fas fa-history"></i>
 						</span>
-						{ task.Name } - Execution History
+						{ task.Name } - { i18n.T(ctx, "execution_history") }
 					</p>
 				</div>
 			</div>
@@ -83,7 +84,7 @@ templ TaskExecutionHistoryHeader(task *store.Task) {
 					<span class="icon">
 						<i class="fas fa-play"></i>
 					</span>
-					<span>Execute</span>
+					<span>{ i18n.T(ctx, "execute") }</span>
 				</a>
 			</div>
 		</div>
@@ -94,26 +95,26 @@ templ ExecutionStatsCards(stats *execution.ExecutionStats) {
 	<div class="field is-grouped">
 		<div class="control">
 			<div class="tags has-addons">
-				<span class="tag">Total</span>
+				<span class="tag">{ i18n.T(ctx, "total") }</span>
 				<span class="tag is-info">{ fmt.Sprintf("%d", stats.TotalExecutions) }</span>
 			</div>
 		</div>
 		<div class="control">
 			<div class="tags has-addons">
-				<span class="tag">Success</span>
+				<span class="tag">{ i18n.T(ctx, "success") }</span>
 				<span class="tag is-success">{ fmt.Sprintf("%d", stats.SuccessfulRuns) }</span>
 			</div>
 		</div>
 		<div class="control">
 			<div class="tags has-addons">
-				<span class="tag">Failed</span>
+				<span class="tag">{ i18n.T(ctx, "failed") }</span>
 				<span class="tag is-danger">{ fmt.Sprintf("%d", stats.FailedRuns) }</span>
 			</div>
 		</div>
 		if stats.AverageRunTime > 0 {
 			<div class="control">
 				<div class="tags has-addons">
-					<span class="tag">Avg Time</span>
+					<span class="tag">{ i18n.T(ctx, "avg_time") }</span>
 					<span class="tag">{ stats.AverageRunTime.Round(time.Second).String() }</span>
 				</div>
 			</div>
@@ -126,18 +127,18 @@ templ ExecutionHistoryTable(executions []*store.TaskExecution, taskID uint, stat
 		<div class="card-content">
 			if len(executions) == 0 {
 				<div class="notification">
-					<p>No executions found for this task.</p>
+					<p>{ i18n.T(ctx, "no_executions_found") }</p>
 				</div>
 			} else {
 				<div class="table-container">
 					<table class="table is-fullwidth is-hoverable">
 						<thead>
 							<tr>
-								<th>ID</th>
-								<th>Status</th>
-								<th>Started</th>
-								<th>Duration</th>
-								<th>Actions</th>
+								<th>{ i18n.T(ctx, "id") }</th>
+								<th>{ i18n.T(ctx, "status") }</th>
+								<th>{ i18n.T(ctx, "started") }</th>
+								<th>{ i18n.T(ctx, "duration") }</th>
+								<th>{ i18n.T(ctx, "actions") }</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -171,14 +172,14 @@ templ ExecutionHistoryRow(execution store.TaskExecution) {
 					{ formatRelativeTime(*execution.StartedAt) }
 				</span>
 			} else {
-				<span class="has-text-grey">Not started</span>
+				<span class="has-text-grey">{ i18n.T(ctx, "not_started") }</span>
 			}
 		</td>
 		<td>
 			if execution.StartedAt != nil && execution.FinishedAt != nil {
 				{ execution.FinishedAt.Sub(*execution.StartedAt).Round(time.Second).String() }
 			} else if execution.StartedAt != nil {
-				<span class="tag is-warning is-light">Running</span>
+				<span class="tag is-warning is-light">{ i18n.T(ctx, "running") }</span>
 			} else {
 				<span class="has-text-grey">-</span>
 			}
@@ -193,7 +194,7 @@ templ ExecutionHistoryRow(execution store.TaskExecution) {
 						<span class="icon">
 							<i class="fas fa-eye"></i>
 						</span>
-						<span>View</span>
+						<span>{ i18n.T(ctx, "view") }</span>
 					</a>
 				</div>
 			</div>
@@ -202,7 +203,7 @@ templ ExecutionHistoryRow(execution store.TaskExecution) {
 }
 
 templ GlobalExecutionHistoryPage(vmodel GlobalExecutionHistoryPageVModel) {
-	@common.Page(common.WithTitle("All Executions")) {
+	@common.Page(common.WithTitle(i18n.T(ctx, "all_executions"))) {
 		<div class="container">
 			@common.Navbar(vmodel.Navbar)
 			<section class="section">
@@ -213,7 +214,7 @@ templ GlobalExecutionHistoryPage(vmodel GlobalExecutionHistoryPageVModel) {
 								<span class="icon">
 									<i class="fas fa-cubes"></i>
 								</span>
-								All Executions
+								{ i18n.T(ctx, "all_executions") }
 							</p>
 						</div>
 					</div>
@@ -233,34 +234,34 @@ templ TaskExecutionHistoryFilters(filters execution.ExecutionFilters, taskID uin
 				<span class="icon">
 					<i class="fas fa-filter"></i>
 				</span>
-				Filters
+				{ i18n.T(ctx, "filters") }
 			</p>
 		</div>
 		<div class="card-content">
 			<form method="GET" class="field is-grouped is-grouped-multiline">
 				<div class="control">
 					<div class="field">
-						<label class="label">Status</label>
+						<label class="label">{ i18n.T(ctx, "status") }</label>
 						<div class="select">
 							<select name="status">
-								<option value="">All Statuses</option>
-								<option value="succeeded" selected?={ filters.Status == "succeeded" }>Succeeded</option>
-								<option value="failed" selected?={ filters.Status == "failed" }>Failed</option>
-								<option value="running" selected?={ filters.Status == "running" }>Running</option>
-								<option value="pending" selected?={ filters.Status == "pending" }>Pending</option>
+								<option value="">{ i18n.T(ctx, "all_statuses") }</option>
+								<option value="succeeded" selected?={ filters.Status == "succeeded" }>{ i18n.T(ctx, "succeeded") }</option>
+								<option value="failed" selected?={ filters.Status == "failed" }>{ i18n.T(ctx, "failed") }</option>
+								<option value="running" selected?={ filters.Status == "running" }>{ i18n.T(ctx, "running") }</option>
+								<option value="pending" selected?={ filters.Status == "pending" }>{ i18n.T(ctx, "pending") }</option>
 							</select>
 						</div>
 					</div>
 				</div>
 				<div class="control">
 					<div class="field">
-						<label class="label">Date From</label>
+						<label class="label">{ i18n.T(ctx, "date_from") }</label>
 						<input class="input" type="date" name="date_from" value={ filters.DateFrom }/>
 					</div>
 				</div>
 				<div class="control">
 					<div class="field">
-						<label class="label">Date To</label>
+						<label class="label">{ i18n.T(ctx, "date_to") }</label>
 						<input class="input" type="date" name="date_to" value={ filters.DateTo }/>
 					</div>
 				</div>
@@ -271,7 +272,7 @@ templ TaskExecutionHistoryFilters(filters execution.ExecutionFilters, taskID uin
 							<span class="icon">
 								<i class="fas fa-search"></i>
 							</span>
-							<span>Filter</span>
+							<span>{ i18n.T(ctx, "filter") }</span>
 						</button>
 					</div>
 				</div>
@@ -282,7 +283,7 @@ templ TaskExecutionHistoryFilters(filters execution.ExecutionFilters, taskID uin
 							<span class="icon">
 								<i class="fas fa-times"></i>
 							</span>
-							<span>Clear</span>
+							<span>{ i18n.T(ctx, "clear") }</span>
 						</a>
 					</div>
 				</div>
