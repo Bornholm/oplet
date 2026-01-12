@@ -14,6 +14,7 @@ import (
 	"github.com/bornholm/oplet/internal/slogx"
 	"github.com/bornholm/oplet/internal/store"
 	taskRepo "github.com/bornholm/oplet/internal/store/repository/task"
+	"github.com/bornholm/oplet/internal/task"
 	taskDef "github.com/bornholm/oplet/internal/task"
 	"github.com/pkg/errors"
 )
@@ -63,6 +64,10 @@ func (h *Handler) getTaskFormPage(w http.ResponseWriter, r *http.Request) {
 				h.logger.ErrorContext(ctx, "could not retrieve task definition", slogx.Error(errors.WithStack(err)))
 				common.HandleError(w, r, common.NewError(err.Error(), "Could not retrieve the specified image", http.StatusInternalServerError))
 				return
+			}
+
+			if err := h.updateTaskFromDefinition(ctx, storeTask, taskDefinition); err != nil {
+				h.logger.ErrorContext(ctx, "could not update task from definition", slogx.Error(errors.WithStack(err)))
 			}
 		}
 	}
@@ -269,5 +274,33 @@ func (h *Handler) fillTaskListDataVModel(ctx context.Context, vmodel *component.
 	}
 
 	vmodel.Tasks = tasks
+	return nil
+}
+
+func (h *Handler) updateTaskFromDefinition(ctx context.Context, task *store.Task, definition *task.Definition) error {
+	changed := false
+
+	if task.Author != definition.Author {
+		task.Author = definition.Author
+		changed = true
+	}
+
+	if task.Description != definition.Description {
+		task.Description = definition.Description
+		changed = true
+	}
+
+	if task.Name != definition.Name {
+		task.Name = definition.Name
+		changed = true
+	}
+
+	if changed {
+		repo := taskRepo.NewRepository(h.store)
+		if err := repo.Update(ctx, task); err != nil {
+			return errors.WithStack(err)
+		}
+	}
+
 	return nil
 }
