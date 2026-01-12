@@ -13,7 +13,7 @@ type LinkItem struct {
 }
 
 templ ErrorPage(vmodel ErrorPageVModel) {
-	@Page(WithTitle(i18n.T(ctx, "error")), WithFooter(false)) {
+	@Page(WithTitle(i18n.T(ctx, "common.error")), WithFooter(false)) {
 		<section class="section is-fullheight">
 			<div class="is-flex is-justify-content-center is-align-items-center is-fullheight">
 				<article class="message is-danger">
@@ -23,9 +23,9 @@ templ ErrorPage(vmodel ErrorPageVModel) {
 					<div class="message-body">
 						{ vmodel.Message }
 						<p class="has-text-centered mt-5">
-							<a href={ BaseURL(ctx) }>{ i18n.T(ctx, "back_to_home") }</a>
+							<a href={ BaseURL(ctx) }>{ i18n.T(ctx, "common.back_to_home") }</a>
 							<span>| </span>
-							<a href={ BaseURL(ctx, WithPath("/auth/logout")) }>{ i18n.T(ctx, "logout") }</a>
+							<a href={ BaseURL(ctx, WithPath("/auth/logout")) }>{ i18n.T(ctx, "common.logout") }</a>
 							for _, l := range vmodel.Links {
 								<span>| </span>
 								<a href={ templ.SafeURL(l.URL) }>{ l.Label }</a>

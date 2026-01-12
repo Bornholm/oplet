@@ -1,14 +1,15 @@
 fr:
-  # Error Page
-  error: "Erreur"
-  back_to_home: "Retour à la page d'accueil"
-  logout: "Déconnexion"
+  common:
+    # Error Page
+    error: "Erreur"
+    back_to_home: "Retour à la page d'accueil"
+    logout: "Déconnexion"
 
-  # Navbar
-  tasks: "Tâches"
-  history: "Historique"
-  admin: "Administration"
+    # Navbar
+    tasks: "Tâches"
+    history: "Historique"
+    admin: "Administration"
 
-  # Page Footer
-  version: "Version %s"
-  documentation: "Documentation"
+    # Page Footer
+    version: "Version %s"
+    documentation: "Documentation"

@@ -62,7 +62,7 @@ func NewHTTPServerFromConfig(ctx context.Context, conf *config.Config) (*http.Se
 	options = append(options, http.WithMount("/runner/", runner))
 
 	webui := webui.NewHandler(store, taskProvider, taskExecutor, fileStorage, slog.Default())
-	options = append(options, http.WithMount("/", authnMiddleware(authzMiddleware(i18nMiddleware(webui)))))
+	options = append(options, http.WithMount("/", i18nMiddleware(authnMiddleware(authzMiddleware(i18nMiddleware(webui))))))
 
 	options = append(options, http.WithMount("/pprof/", authnMiddleware(pprof.NewHandler())))
 
